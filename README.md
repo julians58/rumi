@@ -1,2 +1,2 @@
 # rumi
-Platform for connecting landlords and tenants an roomates
+Platform for connecting landlords, tenants and roomates
