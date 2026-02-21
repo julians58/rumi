@@ -26,7 +26,7 @@ export async function getPublicProfile(userId: string) {
   const prisma = getPrisma();
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, firstName: true, lastName: true, avatarUrl: true, bio: true, createdAt: true },
+    select: { id: true, firstName: true, lastName: true, avatarUrl: true, bio: true, age: true, occupation: true, nationality: true, gender: true, createdAt: true },
   });
 }
 

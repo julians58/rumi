@@ -16,9 +16,32 @@ export async function getMatches(cognitoSub: string) {
   });
   const userMap = new Map(users.map((u: { id: string }) => [u.id, u]));
 
+  // Find conversations for each match pair so the frontend can link to chat
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      OR: matches.map((m: { user1Id: string; user2Id: string }) => ({
+        participant1Id: [m.user1Id, m.user2Id].sort()[0],
+        participant2Id: [m.user1Id, m.user2Id].sort()[1],
+      })),
+    },
+    select: { id: true, participant1Id: true, participant2Id: true },
+  });
+  const convoMap = new Map(
+    conversations.map((c: { id: string; participant1Id: string; participant2Id: string }) => {
+      const key = [c.participant1Id, c.participant2Id].sort().join('-');
+      return [key, c.id];
+    }),
+  );
+
   return matches.map((m: { id: string; user1Id: string; user2Id: string; createdAt: Date }) => {
     const matchedUserId = m.user1Id === user.id ? m.user2Id : m.user1Id;
-    return { id: m.id, createdAt: m.createdAt, matchedUser: userMap.get(matchedUserId) || null };
+    const convoKey = [m.user1Id, m.user2Id].sort().join('-');
+    return {
+      id: m.id,
+      createdAt: m.createdAt,
+      matchedUser: userMap.get(matchedUserId) || null,
+      conversationId: convoMap.get(convoKey) || null,
+    };
   });
 }
 

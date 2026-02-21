@@ -21,6 +21,10 @@ model User {
   phone      String?
   avatarUrl  String?     @map("avatar_url")
   bio        String?
+  age          Int?
+  occupation   String?
+  nationality  String?
+  gender       Gender?
   seekingMode SeekingMode @default(NONE) @map("seeking_mode")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")
@@ -45,6 +49,14 @@ enum SeekingMode {
   NONE
   TENANT
   ROOMMATE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+  PREFER_NOT_TO_SAY
 }
 
 // ============================================================

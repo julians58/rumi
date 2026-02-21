@@ -28,15 +28,29 @@ export async function listProperties(filters: Record<string, unknown>, userSub?:
     if (filters.maxPrice) (where.price as Record<string, unknown>).lte = Number(filters.maxPrice);
   }
 
-  // Exclude already-viewed properties if requested
-  if (filters.excludeViewed && userSub) {
-    const user = await prisma.user.findUnique({ where: { cognitoSub: userSub } });
-    if (user) {
-      const viewedIds = await prisma.propertyView.findMany({
-        where: { userId: user.id },
+  // Resolve the authenticated user once for all user-specific logic
+  let viewedPropertyIds: Set<string> = new Set();
+  if (userSub) {
+    const currentUser = await prisma.user.findUnique({ where: { cognitoSub: userSub } });
+    if (currentUser) {
+      // Exclude the user's own properties from browse listing
+      where.ownerId = { not: currentUser.id };
+
+      // Exclude already-viewed properties if requested
+      if (filters.excludeViewed) {
+        const viewedIds = await prisma.propertyView.findMany({
+          where: { userId: currentUser.id },
+          select: { propertyId: true },
+        });
+        where.id = { notIn: viewedIds.map((v: { propertyId: string }) => v.propertyId) };
+      }
+
+      // Get viewed property IDs to mark isViewed on results
+      const views = await prisma.propertyView.findMany({
+        where: { userId: currentUser.id },
         select: { propertyId: true },
       });
-      where.id = { notIn: viewedIds.map((v: { propertyId: string }) => v.propertyId) };
+      viewedPropertyIds = new Set(views.map((v: { propertyId: string }) => v.propertyId));
     }
   }
 
@@ -54,7 +68,12 @@ export async function listProperties(filters: Record<string, unknown>, userSub?:
     prisma.property.count({ where: where as Prisma.PropertyWhereInput }),
   ]);
 
-  return { data, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  const enriched = data.map((p: (typeof data)[number]) => ({
+    ...p,
+    isViewed: viewedPropertyIds.has(p.id),
+  }));
+
+  return { data: enriched, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
 export async function getPropertyById(id: string) {

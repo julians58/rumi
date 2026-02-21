@@ -3,7 +3,7 @@ import { createPropertyHandler, listPropertiesHandler, getPropertyHandler, updat
 
 const propertiesRoutes: FastifyPluginAsync = async (app) => {
   app.post('/', { preHandler: [app.requireAuth] }, createPropertyHandler);
-  app.get('/', listPropertiesHandler);
+  app.get('/', { preHandler: [app.optionalAuth] }, listPropertiesHandler);
   app.get('/me', { preHandler: [app.requireAuth] }, getMyPropertiesHandler);
   app.get('/viewed', { preHandler: [app.requireAuth] }, getViewedPropertiesHandler);
   app.get('/:id', getPropertyHandler);

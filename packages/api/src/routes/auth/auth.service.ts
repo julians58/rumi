@@ -26,6 +26,12 @@ export async function registerLocal(
   password: string,
   firstName: string,
   lastName: string,
+  extra?: {
+    age?: number | null;
+    occupation?: string | null;
+    nationality?: string | null;
+    gender?: 'MALE' | 'FEMALE' | 'NON_BINARY' | 'OTHER' | 'PREFER_NOT_TO_SAY' | null;
+  },
 ) {
   const prisma = getPrisma();
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -38,6 +44,10 @@ export async function registerLocal(
       password: hashedPassword,
       firstName,
       lastName,
+      age: extra?.age ?? null,
+      occupation: extra?.occupation ?? null,
+      nationality: extra?.nationality ?? null,
+      gender: extra?.gender ?? null,
     },
   });
 

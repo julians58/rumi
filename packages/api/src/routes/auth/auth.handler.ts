@@ -17,7 +17,12 @@ export async function registerHandler(request: FastifyRequest, reply: FastifyRep
   }
 
   const body = registerSchema.parse(request.body);
-  const user = await authService.registerLocal(body.email, body.password, body.firstName, body.lastName);
+  const user = await authService.registerLocal(body.email, body.password, body.firstName, body.lastName, {
+    age: body.age ?? null,
+    occupation: body.occupation ?? null,
+    nationality: body.nationality ?? null,
+    gender: body.gender ?? null,
+  });
   const token = signLocalToken({ sub: user.cognitoSub, email: user.email });
 
   return reply.status(201).send({
@@ -29,6 +34,10 @@ export async function registerHandler(request: FastifyRequest, reply: FastifyRep
       lastName: user.lastName,
       cognitoSub: user.cognitoSub,
       seekingMode: user.seekingMode,
+      age: user.age,
+      occupation: user.occupation,
+      nationality: user.nationality,
+      gender: user.gender,
     },
   });
 }
@@ -61,6 +70,10 @@ export async function loginHandler(request: FastifyRequest, reply: FastifyReply)
       lastName: user.lastName,
       cognitoSub: user.cognitoSub,
       seekingMode: user.seekingMode,
+      age: user.age,
+      occupation: user.occupation,
+      nationality: user.nationality,
+      gender: user.gender,
     },
   });
 }

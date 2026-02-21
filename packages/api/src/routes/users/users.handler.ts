@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { updateUserSchema } from '@rumi/shared';
 import * as usersService from './users.service';
 
 export async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -10,7 +11,8 @@ export async function getMeHandler(request: FastifyRequest, reply: FastifyReply)
 }
 
 export async function updateMeHandler(request: FastifyRequest, reply: FastifyReply) {
-  const user = await usersService.updateUser(request.user!.sub, request.body as Record<string, unknown>);
+  const data = updateUserSchema.parse(request.body);
+  const user = await usersService.updateUser(request.user!.sub, data);
   return reply.send(user);
 }
 
