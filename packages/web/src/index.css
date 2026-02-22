@@ -1,3 +1,4 @@
+@import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
 @theme {
@@ -18,4 +19,8 @@
 body {
   background-color: var(--color-rumi-bg);
   color: var(--color-rumi-text);
+}
+
+.leaflet-container {
+  z-index: 0;
 }

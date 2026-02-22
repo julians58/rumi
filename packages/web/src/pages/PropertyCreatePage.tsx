@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../i18n/es';
 import apiClient from '../services/api-client';
+
+const PropertyMap = lazy(() => import('../components/ui/PropertyMap'));
 
 interface PropertyFormData {
   title: string;
@@ -36,16 +38,23 @@ const DEPARTMENTS = [
   'Valle del Cauca', 'Vaupes', 'Vichada',
 ];
 
+// Default map center: Bogota
+const DEFAULT_CENTER: [number, number] = [4.6486, -74.0628];
+
 export function PropertyCreatePage() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [pinPosition, setPinPosition] = useState<[number, number] | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
+  const [geocoding, setGeocoding] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
   } = useForm<PropertyFormData>({
     defaultValues: {
       propertyType: 'APARTMENT',
@@ -60,6 +69,37 @@ export function PropertyCreatePage() {
     setSelectedAmenities((prev) =>
       prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity],
     );
+  };
+
+  const handleGeocode = async () => {
+    const address = getValues('address');
+    const city = getValues('city');
+    const department = getValues('department');
+    if (!address || !city) return;
+
+    setGeocoding(true);
+    try {
+      const query = `${address}, ${city}, ${department || ''}, Colombia`;
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'RumiApp/1.0 (rumi-rental-platform)' } },
+      );
+      const results = await response.json();
+      if (results.length > 0) {
+        const lat = parseFloat(results[0].lat);
+        const lon = parseFloat(results[0].lon);
+        setPinPosition([lat, lon]);
+        setMapCenter([lat, lon]);
+      }
+    } catch {
+      // Silently fail — user can still click on the map
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  const handleMapClick = (lat: number, lng: number) => {
+    setPinPosition([lat, lng]);
   };
 
   const onSubmit = async (data: PropertyFormData) => {
@@ -79,6 +119,8 @@ export function PropertyCreatePage() {
         city: data.city,
         neighborhood: data.neighborhood || undefined,
         department: data.department,
+        latitude: pinPosition ? pinPosition[0] : undefined,
+        longitude: pinPosition ? pinPosition[1] : undefined,
         amenities: selectedAmenities,
       };
 
@@ -250,6 +292,42 @@ export function PropertyCreatePage() {
               </select>
               {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department.message}</p>}
             </div>
+          </div>
+
+          {/* Map Pin */}
+          <div className="mt-2">
+            <div className="flex items-center gap-3 mb-2">
+              <label className="block text-sm font-medium text-rumi-text/70">{t.map.location}</label>
+              <button
+                type="button"
+                onClick={handleGeocode}
+                disabled={geocoding}
+                className="px-3 py-1.5 text-xs font-medium bg-rumi-primary/10 text-rumi-primary rounded-lg hover:bg-rumi-primary/20 transition-colors disabled:opacity-50"
+              >
+                {geocoding ? t.common.loading : t.map.searchOnMap}
+              </button>
+            </div>
+            <p className="text-xs text-rumi-text/40 mb-2">{t.map.clickToPlace}</p>
+            <div className="rounded-lg overflow-hidden">
+              <Suspense fallback={<div className="h-[250px] bg-rumi-primary/5 rounded-lg animate-pulse" />}>
+                <PropertyMap
+                  markers={pinPosition ? [{
+                    id: 'new-property',
+                    position: pinPosition,
+                    title: getValues('title') || t.map.newPin,
+                  }] : []}
+                  center={mapCenter}
+                  zoom={13}
+                  height="250px"
+                  onMapClick={handleMapClick}
+                />
+              </Suspense>
+            </div>
+            {pinPosition && (
+              <p className="text-xs text-rumi-text/40 mt-1">
+                {t.map.coordinates}: {pinPosition[0].toFixed(6)}, {pinPosition[1].toFixed(6)}
+              </p>
+            )}
           </div>
         </div>
 

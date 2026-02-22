@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { t } from '../i18n/es';
 import apiClient from '../services/api-client';
 import { useAuthStore } from '../store/auth.store';
+
+const PropertyMap = lazy(() => import('../components/ui/PropertyMap'));
+
 
 interface PropertyImage {
   id: string;
@@ -32,6 +35,8 @@ interface Property {
   city: string;
   neighborhood: string | null;
   department: string;
+  latitude: number | string | null;
+  longitude: number | string | null;
   amenities: string[];
   images: PropertyImage[];
   owner: PropertyOwner;
@@ -286,6 +291,27 @@ export function PropertyDetailPage() {
                     <span>{amenityLabels[amenity] || amenity}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Location Map */}
+          {property.latitude && property.longitude && (
+            <div className="bg-white rounded-2xl shadow-md p-5 border border-rumi-primary-light/20">
+              <h2 className="text-lg font-semibold text-rumi-text mb-3">{t.map.location}</h2>
+              <div className="rounded-lg overflow-hidden">
+                <Suspense fallback={<div className="h-[300px] bg-rumi-primary/5 rounded-lg animate-pulse" />}>
+                  <PropertyMap
+                    markers={[{
+                      id: property.id,
+                      position: [Number(property.latitude), Number(property.longitude)],
+                      title: property.title,
+                    }]}
+                    center={[Number(property.latitude), Number(property.longitude)]}
+                    zoom={15}
+                    height="300px"
+                  />
+                </Suspense>
               </div>
             </div>
           )}

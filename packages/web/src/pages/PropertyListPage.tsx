@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { t } from '../i18n/es';
 import apiClient from '../services/api-client';
+
+const PropertyMap = lazy(() => import('../components/ui/PropertyMap'));
 
 interface PropertyImage {
   id: string;
@@ -31,6 +33,8 @@ interface Property {
   city: string;
   neighborhood: string | null;
   department: string;
+  latitude: number | string | null;
+  longitude: number | string | null;
   amenities: string[];
   images: PropertyImage[];
   owner: PropertyOwner;
@@ -74,6 +78,7 @@ export function PropertyListPage() {
     maxPrice: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [page, setPage] = useState(1);
 
   const fetchProperties = async (pageNum: number) => {
@@ -136,6 +141,12 @@ export function PropertyListPage() {
             className="px-4 py-2 text-sm font-medium border border-rumi-primary/30 text-rumi-primary rounded-lg hover:bg-rumi-primary/5 transition-colors"
           >
             {t.common.filter} {showFilters ? '▲' : '▼'}
+          </button>
+          <button
+            onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+            className="px-4 py-2 text-sm font-medium border border-rumi-primary/30 text-rumi-primary rounded-lg hover:bg-rumi-primary/5 transition-colors"
+          >
+            {viewMode === 'grid' ? t.map.mapView : t.map.listView}
           </button>
           <Link
             to="/properties/new"
@@ -243,7 +254,27 @@ export function PropertyListPage() {
         </div>
       )}
 
-      {!loading && properties.length > 0 && (
+      {!loading && properties.length > 0 && viewMode === 'map' && (
+        <div className="bg-white rounded-2xl shadow-md border border-rumi-primary-light/20 overflow-hidden">
+          <Suspense fallback={<div className="h-[500px] bg-rumi-primary/5 animate-pulse" />}>
+            <PropertyMap
+              markers={properties
+                .filter((p) => p.latitude && p.longitude)
+                .map((p) => ({
+                  id: p.id,
+                  position: [Number(p.latitude), Number(p.longitude)] as [number, number],
+                  title: p.title,
+                  price: `$${formatPrice(p.price)} ${p.currency}${p.listingType === 'RENT' ? t.property.perMonth : ''}`,
+                  link: `/properties/${p.id}`,
+                }))}
+              fitBounds
+              height="500px"
+            />
+          </Suspense>
+        </div>
+      )}
+
+      {!loading && properties.length > 0 && viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map((property) => (
             <Link

@@ -296,4 +296,14 @@ export const t = {
   nav2: {
     leases: 'Contratos',
   },
+  map: {
+    location: 'Ubicacion',
+    mapView: 'Ver mapa',
+    listView: 'Ver lista',
+    searchOnMap: 'Buscar en mapa',
+    clickToPlace: 'Haz clic en el mapa para ubicar el inmueble',
+    coordinates: 'Coordenadas',
+    newPin: 'Nuevo inmueble',
+    seeDetails: 'Ver detalles',
+  },
 } as const;
