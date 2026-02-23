@@ -15,6 +15,7 @@ import { MessagesPage } from './pages/MessagesPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationWorkflowPage } from './pages/ApplicationWorkflowPage';
 import { LeasesPage } from './pages/LeasesPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export default function App() {
@@ -26,7 +27,12 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* Protected routes */}
+      {/* Protected routes — onboarding (no MainLayout) */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/onboarding" element={<OnboardingPage />} />
+      </Route>
+
+      {/* Protected routes — main app */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />

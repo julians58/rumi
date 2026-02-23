@@ -38,6 +38,7 @@ export async function registerHandler(request: FastifyRequest, reply: FastifyRep
       occupation: user.occupation,
       nationality: user.nationality,
       gender: user.gender,
+      preferences: (user as Record<string, unknown>).preferences ?? null,
     },
   });
 }
@@ -74,6 +75,7 @@ export async function loginHandler(request: FastifyRequest, reply: FastifyReply)
       occupation: user.occupation,
       nationality: user.nationality,
       gender: user.gender,
+      preferences: (user as Record<string, unknown>).preferences ?? null,
     },
   });
 }

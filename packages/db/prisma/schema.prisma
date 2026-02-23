@@ -25,6 +25,7 @@ model User {
   occupation   String?
   nationality  String?
   gender       Gender?
+  preferences  Json?       // User preferences (lookingFor, myTraits, idealRoommate)
   seekingMode SeekingMode @default(NONE) @map("seeking_mode")
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")

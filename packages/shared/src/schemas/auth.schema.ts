@@ -33,5 +33,6 @@ export interface AuthResponse {
     occupation: string | null;
     nationality: string | null;
     gender: string | null;
+    preferences: Record<string, unknown> | null;
   };
 }

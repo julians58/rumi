@@ -6,3 +6,4 @@ export * from './message.schema';
 export * from './application.schema';
 export * from './rating.schema';
 export * from './auth.schema';
+export * from './user-preferences.schema';

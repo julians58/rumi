@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { updateUserSchema } from '@rumi/shared';
+import { updateUserSchema, userPreferencesSchema } from '@rumi/shared';
 import * as usersService from './users.service';
 
 export async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -19,6 +19,13 @@ export async function updateMeHandler(request: FastifyRequest, reply: FastifyRep
 export async function updateSeekingModeHandler(request: FastifyRequest, reply: FastifyReply) {
   const { seekingMode } = request.body as { seekingMode: string };
   const user = await usersService.updateSeekingMode(request.user!.sub, seekingMode);
+  return reply.send(user);
+}
+
+export async function updatePreferencesHandler(request: FastifyRequest, reply: FastifyReply) {
+  const body = request.body as { preferences: unknown };
+  const validated = userPreferencesSchema.parse(body.preferences);
+  const user = await usersService.updatePreferences(request.user!.sub, validated);
   return reply.send(user);
 }
 

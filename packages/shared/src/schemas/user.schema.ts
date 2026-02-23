@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { userPreferencesSchema } from './user-preferences.schema';
 
 export const seekingModeEnum = z.enum(['NONE', 'TENANT', 'ROOMMATE']);
 export const genderEnum = z.enum(['MALE', 'FEMALE', 'NON_BINARY', 'OTHER', 'PREFER_NOT_TO_SAY']);
@@ -12,6 +13,7 @@ export const updateUserSchema = z.object({
   occupation: z.string().max(200).optional().nullable(),
   nationality: z.string().max(100).optional().nullable(),
   gender: genderEnum.optional().nullable(),
+  preferences: userPreferencesSchema.optional().nullable(),
 });
 
 export const updateSeekingModeSchema = z.object({
@@ -31,5 +33,6 @@ export const userResponseSchema = z.object({
   nationality: z.string().nullable(),
   gender: genderEnum.nullable(),
   seekingMode: seekingModeEnum,
+  preferences: z.unknown().nullable().optional(),
   createdAt: z.string(),
 });

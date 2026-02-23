@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import type { UserPreferences } from '@rumi/shared';
 import { t } from '../i18n/es';
 import { useAuthStore } from '../store/auth.store';
 import apiClient from '../services/api-client';
@@ -12,6 +13,20 @@ import { Avatar } from '../components/ui/Avatar';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorAlert } from '../components/ui/ErrorAlert';
 import { IconEdit, IconLogout } from '../components/ui/Icons';
+import { OnboardingWizard } from '../components/onboarding/OnboardingWizard';
+import {
+  LOOKING_FOR_OPTIONS,
+  SCHEDULE_OPTIONS,
+  DRINKING_OPTIONS,
+  CLEANLINESS_OPTIONS,
+  PERSONALITY_OPTIONS,
+  WORK_OPTIONS,
+  LIFESTYLE_TOGGLES,
+  IDEAL_SCHEDULE_OPTIONS,
+  IDEAL_TOLERANCE_TOGGLES,
+  IDEAL_CLEANLINESS_OPTIONS,
+  GENDER_PREF_OPTIONS,
+} from '../components/onboarding/onboarding-config';
 
 interface UserProfile {
   id: string;
@@ -26,6 +41,7 @@ interface UserProfile {
   nationality: string | null;
   gender: 'MALE' | 'FEMALE' | 'NON_BINARY' | 'OTHER' | 'PREFER_NOT_TO_SAY' | null;
   seekingMode: 'NONE' | 'TENANT' | 'ROOMMATE';
+  preferences: UserPreferences | null;
   createdAt: string;
 }
 
@@ -56,6 +72,20 @@ const inputClass =
 
 const labelClass = 'block text-sm font-medium text-rumi-text/70 mb-1.5';
 
+// Small read-only chip for displaying selected preferences
+function ReadOnlyChip({ emoji, label }: { emoji: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rumi-primary/8 text-xs font-medium text-rumi-primary-dark">
+      <span>{emoji}</span> {label}
+    </span>
+  );
+}
+
+// Helper to find option label by value from config arrays
+function findOption(options: { value: string; emoji: string; label: string }[], value: string) {
+  return options.find((o) => o.value === value);
+}
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -63,7 +93,9 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
+  const [editingPrefs, setEditingPrefs] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors: formErrors } } = useForm<ProfileFormData>();
 
@@ -95,6 +127,7 @@ export function ProfilePage() {
         age: data.age ? parseInt(data.age, 10) : null,
         occupation: data.occupation || null, nationality: data.nationality || null,
         gender: data.gender || null,
+        preferences: profile?.preferences ?? null,
       };
       const res = await apiClient.put<UserProfile>('/users/me', payload);
       setProfile(res.data);
@@ -103,6 +136,19 @@ export function ProfilePage() {
       setError('Error al guardar los cambios');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSavePreferences = async (prefs: UserPreferences) => {
+    setSavingPrefs(true);
+    try {
+      await apiClient.put('/users/me/preferences', { preferences: prefs });
+      setProfile((prev) => prev ? { ...prev, preferences: prefs } : prev);
+      setEditingPrefs(false);
+    } catch {
+      setError('Error al guardar preferencias');
+    } finally {
+      setSavingPrefs(false);
     }
   };
 
@@ -126,12 +172,83 @@ export function ProfilePage() {
 
   if (!profile) return null;
 
+  const prefs = profile.preferences;
+
+  // Render read-only preference chips
+  const renderPreferencesView = () => {
+    if (!prefs) {
+      return (
+        <div className="text-center py-4">
+          <p className="text-sm text-rumi-text/40 mb-3">Completa tus preferencias para mejorar tu matching</p>
+          <Button variant="outline" size="sm" onClick={() => setEditingPrefs(true)}>
+            Agregar preferencias
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {/* Sobre mi */}
+        {prefs.myTraits && (
+          <div>
+            <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-2">Sobre mí</p>
+            <div className="flex gap-2 flex-wrap">
+              {prefs.myTraits.worksOutside === true && <ReadOnlyChip emoji={WORK_OPTIONS.trueOption.emoji} label={WORK_OPTIONS.trueOption.label} />}
+              {prefs.myTraits.worksOutside === false && <ReadOnlyChip emoji={WORK_OPTIONS.falseOption.emoji} label={WORK_OPTIONS.falseOption.label} />}
+              {prefs.myTraits.schedule && (() => { const o = findOption(SCHEDULE_OPTIONS, prefs.myTraits!.schedule!); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })()}
+              {LIFESTYLE_TOGGLES.map((toggle) => {
+                const val = prefs.myTraits?.[toggle.key as keyof typeof prefs.myTraits];
+                if (val === true) return <ReadOnlyChip key={toggle.key} emoji={toggle.trueOption.emoji} label={toggle.trueOption.label} />;
+                if (val === false) return <ReadOnlyChip key={toggle.key} emoji={toggle.falseOption.emoji} label={toggle.falseOption.label} />;
+                return null;
+              })}
+              {prefs.myTraits.drinks && (() => { const o = findOption(DRINKING_OPTIONS, prefs.myTraits!.drinks!); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })()}
+              {prefs.myTraits.cleanliness && (() => { const o = findOption(CLEANLINESS_OPTIONS, prefs.myTraits!.cleanliness!); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })()}
+              {prefs.myTraits.personality?.map((p) => { const o = findOption(PERSONALITY_OPTIONS, p); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })}
+            </div>
+          </div>
+        )}
+
+        {/* Que busco */}
+        {prefs.lookingFor && prefs.lookingFor.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-2">Busco</p>
+            <div className="flex gap-2 flex-wrap">
+              {prefs.lookingFor.map((lf) => { const o = findOption(LOOKING_FOR_OPTIONS, lf); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })}
+            </div>
+          </div>
+        )}
+
+        {/* Companero ideal */}
+        {prefs.idealRoommate && (
+          <div>
+            <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-2">Compañero ideal</p>
+            <div className="flex gap-2 flex-wrap">
+              {prefs.idealRoommate.schedulePreference && (() => { const o = findOption(IDEAL_SCHEDULE_OPTIONS, prefs.idealRoommate!.schedulePreference!); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })()}
+              {IDEAL_TOLERANCE_TOGGLES.map((toggle) => {
+                const val = prefs.idealRoommate?.[toggle.key as keyof typeof prefs.idealRoommate];
+                if (val === true) return <ReadOnlyChip key={toggle.key} emoji={toggle.trueOption.emoji} label={toggle.trueOption.label} />;
+                if (val === false) return <ReadOnlyChip key={toggle.key} emoji={toggle.falseOption.emoji} label={toggle.falseOption.label} />;
+                return null;
+              })}
+              {prefs.idealRoommate.cleanlinessPreference && (() => { const o = findOption(IDEAL_CLEANLINESS_OPTIONS, prefs.idealRoommate!.cleanlinessPreference!); return o ? <ReadOnlyChip key={o.value} emoji={o.emoji} label={o.label} /> : null; })()}
+              {prefs.idealRoommate.personalityPreference?.map((p) => { const o = findOption(PERSONALITY_OPTIONS, p); return o ? <ReadOnlyChip key={`ideal-${o.value}`} emoji={o.emoji} label={o.label} /> : null; })}
+              {prefs.idealRoommate.ageRange && <ReadOnlyChip emoji="🎂" label={`${prefs.idealRoommate.ageRange.min}-${prefs.idealRoommate.ageRange.max} años`} />}
+              {prefs.idealRoommate.genderPreference?.map((g) => { const o = findOption(GENDER_PREF_OPTIONS, g); return o ? <ReadOnlyChip key={`gp-${o.value}`} emoji={o.emoji} label={o.label} /> : null; })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <PageHeader
         title={t.nav.profile}
         action={
-          !editing ? (
+          !editing && !editingPrefs ? (
             <Button variant="outline" size="sm" icon={<IconEdit className="w-4 h-4" />} onClick={startEditing}>
               {t.profile.editProfile}
             </Button>
@@ -141,7 +258,17 @@ export function ProfilePage() {
 
       <ErrorAlert message={error} className="mb-4" />
 
-      {editing ? (
+      {/* Preferences editing mode */}
+      {editingPrefs ? (
+        <div className="mb-6">
+          <OnboardingWizard
+            onComplete={handleSavePreferences}
+            onSkipAll={() => setEditingPrefs(false)}
+            saving={savingPrefs}
+            initialPreferences={prefs}
+          />
+        </div>
+      ) : editing ? (
         <form onSubmit={handleSubmit(onSubmit)}>
           <Card variant="bordered" padding="md" className="mb-6 space-y-4">
             <h3 className="text-lg font-semibold text-rumi-text">{t.profile.personalInfo}</h3>
@@ -275,6 +402,18 @@ export function ProfilePage() {
                 {new Date(profile.createdAt).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
+          </Card>
+
+          {/* Preferences section */}
+          <Card variant="bordered" padding="md" className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-rumi-text/40 uppercase tracking-wider">Mis preferencias</h3>
+              <Button variant="ghost" size="sm" onClick={() => setEditingPrefs(true)}>
+                <IconEdit className="w-3.5 h-3.5 mr-1" />
+                Editar
+              </Button>
+            </div>
+            {renderPreferencesView()}
           </Card>
 
           <Card variant="default" padding="md" className="mb-6">

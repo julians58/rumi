@@ -60,7 +60,7 @@ export function RegisterPage() {
       };
       const res = await registerUser(payload);
       setUser({ sub: res.user.cognitoSub, userId: res.user.id, email: res.user.email, token: res.token });
-      navigate('/', { replace: true });
+      navigate('/onboarding', { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

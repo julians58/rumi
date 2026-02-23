@@ -49,6 +49,11 @@ async function main() {
       occupation: 'Desarrollador de software',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'APARTMENT'],
+        myTraits: { worksOutside: false, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['CALM', 'INTROVERT'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'CLEAN', personalityPreference: ['CALM', 'SOCIAL'], ageRange: { min: 20, max: 35 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -65,6 +70,10 @@ async function main() {
       occupation: 'Empresaria',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: [],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: true, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'VERY_CLEAN', personality: ['EXTROVERT', 'ACTIVE'] },
+      },
     },
   });
 
@@ -81,6 +90,11 @@ async function main() {
       occupation: 'Estudiante de ingenieria',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'ROOM'],
+        myTraits: { worksOutside: true, schedule: 'NIGHT', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: true, cleanliness: 'MODERATE', personality: ['SOCIAL', 'STUDIOUS'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'ANY', personalityPreference: ['SOCIAL', 'CALM'], ageRange: { min: 18, max: 30 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -97,6 +111,11 @@ async function main() {
       occupation: 'Diseñadora grafica',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'SHARE_EXPENSES'],
+        myTraits: { worksOutside: false, schedule: 'MORNING', hasPets: true, hasChildren: false, smokes: false, drinks: 'NEVER', hasFrequentVisitors: false, cleanliness: 'VERY_CLEAN', personality: ['CALM', 'ACTIVE'] },
+        idealRoommate: { schedulePreference: 'MORNING', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: false, visitorsOk: false, cleanlinessPreference: 'VERY_CLEAN', personalityPreference: ['CALM', 'INTROVERT'], ageRange: { min: 22, max: 35 }, genderPreference: ['FEMALE'] },
+      },
     },
   });
 
@@ -113,6 +132,11 @@ async function main() {
       occupation: 'Chef',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE'],
+        myTraits: { worksOutside: true, schedule: 'NIGHT', hasPets: false, hasChildren: false, smokes: false, drinks: 'FREQUENTLY', hasFrequentVisitors: true, cleanliness: 'MODERATE', personality: ['EXTROVERT', 'SOCIAL'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: true, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'ANY', personalityPreference: ['SOCIAL', 'EXTROVERT'], ageRange: { min: 20, max: 35 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -129,6 +153,11 @@ async function main() {
       occupation: 'Estudiante de medicina',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOM', 'SHARE_EXPENSES'],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'NEVER', hasFrequentVisitors: false, cleanliness: 'VERY_CLEAN', personality: ['INTROVERT', 'STUDIOUS'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: false, visitorsOk: false, cleanlinessPreference: 'VERY_CLEAN', personalityPreference: ['CALM', 'STUDIOUS'], ageRange: { min: 20, max: 30 }, genderPreference: ['FEMALE'] },
+      },
     },
   });
 
@@ -145,6 +174,11 @@ async function main() {
       occupation: 'Analista financiero',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'APARTMENT'],
+        myTraits: { worksOutside: false, schedule: 'AFTERNOON', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['INTROVERT', 'CALM'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: false, cleanlinessPreference: 'CLEAN', personalityPreference: ['CALM', 'INTROVERT'], ageRange: { min: 22, max: 35 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -161,6 +195,11 @@ async function main() {
       occupation: 'Musica freelance',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'ROOM'],
+        myTraits: { worksOutside: false, schedule: 'NIGHT', hasPets: true, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: true, cleanliness: 'MODERATE', personality: ['EXTROVERT', 'SOCIAL'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: true, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'ANY', personalityPreference: ['SOCIAL', 'EXTROVERT', 'ACTIVE'], ageRange: { min: 20, max: 35 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -177,6 +216,11 @@ async function main() {
       occupation: 'Abogado',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'APARTMENT'],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['CALM', 'SOCIAL'] },
+        idealRoommate: { schedulePreference: 'MORNING', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'CLEAN', personalityPreference: ['CALM', 'SOCIAL'], ageRange: { min: 24, max: 35 }, genderPreference: ['MALE'] },
+      },
     },
   });
 
@@ -193,6 +237,11 @@ async function main() {
       occupation: 'Marketing digital',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'SHARE_EXPENSES'],
+        myTraits: { worksOutside: false, schedule: 'AFTERNOON', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: true, cleanliness: 'CLEAN', personality: ['EXTROVERT', 'SOCIAL', 'ACTIVE'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'MODERATE', personalityPreference: ['SOCIAL', 'EXTROVERT'], ageRange: { min: 22, max: 32 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -209,6 +258,11 @@ async function main() {
       occupation: 'Fotografo',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'APARTMENT'],
+        myTraits: { worksOutside: true, schedule: 'AFTERNOON', hasPets: true, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['INTROVERT', 'CALM'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: false, cleanlinessPreference: 'CLEAN', personalityPreference: ['CALM', 'INTROVERT'], ageRange: { min: 24, max: 38 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -225,6 +279,11 @@ async function main() {
       occupation: 'Nutricionista',
       nationality: 'Colombiana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE'],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'NEVER', hasFrequentVisitors: false, cleanliness: 'VERY_CLEAN', personality: ['ACTIVE', 'EXTROVERT'] },
+        idealRoommate: { schedulePreference: 'MORNING', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: false, visitorsOk: false, cleanlinessPreference: 'VERY_CLEAN', personalityPreference: ['ACTIVE', 'CALM'], ageRange: { min: 20, max: 32 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -241,6 +300,11 @@ async function main() {
       occupation: 'CEO / Emprendedor',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'APARTMENT'],
+        myTraits: { worksOutside: false, schedule: 'NIGHT', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: true, cleanliness: 'MODERATE', personality: ['EXTROVERT', 'ACTIVE', 'SOCIAL'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'ANY', personalityPreference: ['ACTIVE', 'SOCIAL'], ageRange: { min: 24, max: 38 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -257,6 +321,11 @@ async function main() {
       occupation: 'Instructora de yoga',
       nationality: 'Argentina',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'ROOM'],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'NEVER', hasFrequentVisitors: false, cleanliness: 'VERY_CLEAN', personality: ['INTROVERT', 'CALM'] },
+        idealRoommate: { schedulePreference: 'MORNING', petsOk: false, childrenOk: false, smokingOk: false, drinkingOk: false, visitorsOk: false, cleanlinessPreference: 'VERY_CLEAN', personalityPreference: ['CALM', 'INTROVERT'], ageRange: { min: 22, max: 35 }, genderPreference: ['FEMALE'] },
+      },
     },
   });
 
@@ -273,6 +342,11 @@ async function main() {
       occupation: 'Ingeniero de sistemas',
       nationality: 'Colombiana',
       gender: 'MALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'SHARE_EXPENSES'],
+        myTraits: { worksOutside: true, schedule: 'AFTERNOON', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['CALM', 'SOCIAL'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'CLEAN', personalityPreference: ['CALM', 'SOCIAL'], ageRange: { min: 22, max: 35 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
@@ -289,6 +363,11 @@ async function main() {
       occupation: 'Consultora',
       nationality: 'Venezolana',
       gender: 'FEMALE',
+      preferences: {
+        lookingFor: ['ROOMMATE', 'ROOM', 'SHARE_EXPENSES'],
+        myTraits: { worksOutside: true, schedule: 'MORNING', hasPets: false, hasChildren: false, smokes: false, drinks: 'SOCIALLY', hasFrequentVisitors: false, cleanliness: 'CLEAN', personality: ['SOCIAL', 'EXTROVERT'] },
+        idealRoommate: { schedulePreference: 'ANY', petsOk: true, childrenOk: false, smokingOk: false, drinkingOk: true, visitorsOk: true, cleanlinessPreference: 'ANY', personalityPreference: ['SOCIAL', 'CALM'], ageRange: { min: 20, max: 32 }, genderPreference: ['ANY'] },
+      },
     },
   });
 
