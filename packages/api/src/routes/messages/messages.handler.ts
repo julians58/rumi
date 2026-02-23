@@ -8,8 +8,8 @@ export async function listConversationsHandler(request: FastifyRequest, reply: F
 
 export async function getMessagesHandler(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
-  const messages = await messagesService.getMessages(request.user!.sub, id);
-  return reply.send(messages);
+  const result = await messagesService.getMessages(request.user!.sub, id);
+  return reply.send(result);
 }
 
 export async function sendMessageHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -17,4 +17,10 @@ export async function sendMessageHandler(request: FastifyRequest, reply: Fastify
   const { content } = request.body as { content: string };
   const message = await messagesService.sendMessage(request.user!.sub, id, content);
   return reply.status(201).send(message);
+}
+
+export async function deleteConversationHandler(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as { id: string };
+  await messagesService.deleteConversation(request.user!.sub, id);
+  return reply.status(204).send();
 }

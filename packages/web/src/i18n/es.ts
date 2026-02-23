@@ -180,6 +180,10 @@ export const t = {
     selectConversation: 'Selecciona una conversacion',
     selectConversationSubtitle: 'Elige un chat de la lista para comenzar',
     errorSending: 'Error al enviar mensaje',
+    blocked: 'Finalizada',
+    conversationBlocked: 'Esta conversacion ha sido finalizada',
+    deleteConversation: 'Eliminar conversacion',
+    deleteConversationConfirm: '¿Estas seguro de que quieres eliminar esta conversacion? No podras ver los mensajes anteriores.',
   },
   profile: {
     age: 'Edad',

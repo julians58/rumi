@@ -10,6 +10,11 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+interface GetMessagesResponse {
+  messages: ChatMessage[];
+  blockedAt: string | null;
+}
+
 interface UseChatOptions {
   conversationId: string | undefined;
 }
@@ -20,6 +25,7 @@ interface UseChatReturn {
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
+  blockedAt: string | null;
 }
 
 export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
@@ -27,6 +33,7 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [blockedAt, setBlockedAt] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -41,10 +48,11 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
   const fetchMessages = useCallback(async () => {
     if (!conversationId) return;
     try {
-      const res = await apiClient.get<ChatMessage[]>(`/messages/conversations/${conversationId}`);
+      const res = await apiClient.get<GetMessagesResponse>(`/messages/conversations/${conversationId}`);
       if (mountedRef.current) {
-        setMessages(res.data);
-        lastMessageCount.current = res.data.length;
+        setMessages(res.data.messages);
+        setBlockedAt(res.data.blockedAt);
+        lastMessageCount.current = res.data.messages.length;
         setError(null);
       }
     } catch {
@@ -64,10 +72,13 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
     pollInterval.current = setInterval(async () => {
       if (!conversationId || !mountedRef.current) return;
       try {
-        const res = await apiClient.get<ChatMessage[]>(`/messages/conversations/${conversationId}`);
-        if (mountedRef.current && res.data.length !== lastMessageCount.current) {
-          setMessages(res.data);
-          lastMessageCount.current = res.data.length;
+        const res = await apiClient.get<GetMessagesResponse>(`/messages/conversations/${conversationId}`);
+        if (mountedRef.current) {
+          if (res.data.messages.length !== lastMessageCount.current) {
+            setMessages(res.data.messages);
+            lastMessageCount.current = res.data.messages.length;
+          }
+          setBlockedAt(res.data.blockedAt);
         }
       } catch {
         // Silently ignore poll errors
@@ -113,6 +124,10 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
               return [...prev, data.message];
             });
           }
+          // Handle conversation blocked event
+          if (data.type === 'conversation_blocked' && data.conversationId === conversationId) {
+            setBlockedAt(new Date().toISOString());
+          }
         } catch {
           // Ignore malformed WS messages
         }
@@ -152,6 +167,7 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
     setMessages([]);
     setError(null);
     setIsConnected(false);
+    setBlockedAt(null);
 
     if (conversationId) {
       fetchMessages();
@@ -213,5 +229,5 @@ export function useChat({ conversationId }: UseChatOptions): UseChatReturn {
     [conversationId, user?.userId],
   );
 
-  return { messages, sendMessage, isConnected, isLoading, error };
+  return { messages, sendMessage, isConnected, isLoading, error, blockedAt };
 }

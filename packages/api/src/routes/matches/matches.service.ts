@@ -1,4 +1,5 @@
 import { getPrisma } from '../../lib/prisma';
+import { pushToUser } from '../../plugins/websocket';
 
 export async function getMatches(cognitoSub: string) {
   const prisma = getPrisma();
@@ -52,5 +53,30 @@ export async function unmatch(cognitoSub: string, matchId: string) {
   if (match.user1Id !== user.id && match.user2Id !== user.id) {
     throw Object.assign(new Error('No tienes permiso para eliminar este match'), { statusCode: 403 });
   }
-  await prisma.match.delete({ where: { id: matchId } });
+
+  // Sort participant IDs to match Conversation convention
+  const [p1, p2] = [match.user1Id, match.user2Id].sort();
+
+  await prisma.$transaction(async (tx) => {
+    // Delete the match
+    await tx.match.delete({ where: { id: matchId } });
+
+    // Block the associated conversation (if it exists)
+    const conversation = await tx.conversation.findUnique({
+      where: { participant1Id_participant2Id: { participant1Id: p1, participant2Id: p2 } },
+    });
+
+    if (conversation) {
+      await tx.conversation.update({
+        where: { id: conversation.id },
+        data: { blockedAt: new Date() },
+      });
+
+      // Push real-time notification to both users
+      const otherUserId = match.user1Id === user.id ? match.user2Id : match.user1Id;
+      const payload = { type: 'conversation_blocked', conversationId: conversation.id };
+      pushToUser(user.id, payload);
+      pushToUser(otherUserId, payload);
+    }
+  });
 }

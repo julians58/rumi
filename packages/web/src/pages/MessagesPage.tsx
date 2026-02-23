@@ -7,7 +7,7 @@ import { useChat } from '../hooks/useChat';
 import { Avatar } from '../components/ui/Avatar';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
-import { IconArrowLeft, IconSend, IconMessage, IconHeart } from '../components/ui/Icons';
+import { IconArrowLeft, IconSend, IconMessage, IconHeart, IconTrash } from '../components/ui/Icons';
 
 interface Participant {
   id: string;
@@ -26,6 +26,7 @@ interface Conversation {
   id: string;
   participant: Participant;
   lastMessage: LastMessage | null;
+  blockedAt: string | null;
   createdAt: string;
 }
 
@@ -74,11 +75,13 @@ function ConversationList({
   activeId,
   loading,
   userId,
+  onDeleteConversation,
 }: {
   conversations: Conversation[];
   activeId: string | undefined;
   loading: boolean;
   userId: string;
+  onDeleteConversation: (id: string) => void;
 }) {
   const navigate = useNavigate();
 
@@ -108,13 +111,15 @@ function ConversationList({
       {conversations.map((conv) => {
         const isActive = conv.id === activeId;
         const isMine = conv.lastMessage?.senderId === userId;
+        const isBlocked = !!conv.blockedAt;
+
         return (
-          <button
+          <div
             key={conv.id}
-            onClick={() => navigate(`/messages/${conv.id}`)}
-            className={`w-full text-left px-4 py-3.5 flex items-center gap-3 hover:bg-rumi-primary/[0.03] transition-colors ${
+            className={`group flex items-center gap-3 px-4 py-3.5 hover:bg-rumi-primary/[0.03] transition-colors cursor-pointer ${
               isActive ? 'bg-rumi-primary/5 border-l-3 border-rumi-primary' : ''
-            }`}
+            } ${isBlocked ? 'opacity-50' : ''}`}
+            onClick={() => navigate(`/messages/${conv.id}`)}
           >
             <Avatar
               src={conv.participant.avatarUrl}
@@ -124,9 +129,16 @@ function ConversationList({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <p className={`text-sm font-semibold text-rumi-text truncate ${isActive ? 'text-rumi-primary' : ''}`}>
-                  {conv.participant.firstName} {conv.participant.lastName}
-                </p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className={`text-sm font-semibold text-rumi-text truncate ${isActive ? 'text-rumi-primary' : ''}`}>
+                    {conv.participant.firstName} {conv.participant.lastName}
+                  </p>
+                  {isBlocked && (
+                    <span className="text-[10px] text-rumi-text/40 bg-rumi-text/5 px-1.5 py-0.5 rounded flex-shrink-0">
+                      {t.messages.blocked}
+                    </span>
+                  )}
+                </div>
                 {conv.lastMessage && (
                   <span className="text-[10px] text-rumi-text/30 flex-shrink-0 ml-2">
                     {formatRelativeTime(conv.lastMessage.createdAt)}
@@ -142,7 +154,21 @@ function ConversationList({
                 <p className="text-xs text-rumi-text/25 italic mt-0.5">Sin mensajes</p>
               )}
             </div>
-          </button>
+
+            {/* Delete conversation button — visible on hover, hidden for blocked */}
+            {!isBlocked && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteConversation(conv.id);
+                }}
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-rumi-text/25 hover:text-red-400 hover:bg-red-50 transition-all"
+                title={t.messages.deleteConversation}
+              >
+                <IconTrash className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         );
       })}
     </div>
@@ -159,7 +185,7 @@ function ChatView({
   participant: Participant | undefined;
   userId: string;
 }) {
-  const { messages, sendMessage, isConnected, isLoading, error } = useChat({ conversationId });
+  const { messages, sendMessage, isConnected, isLoading, error, blockedAt } = useChat({ conversationId });
   const [input, setInput] = useState('');
   const [sendError, setSendError] = useState('');
   const [sending, setSending] = useState(false);
@@ -213,12 +239,18 @@ function ChatView({
             {participant ? `${participant.firstName} ${participant.lastName}` : '...'}
           </p>
           <div className="flex items-center gap-1.5">
-            {isConnected && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            {blockedAt ? (
+              <p className="text-[11px] text-rumi-text/30">{t.messages.blocked}</p>
+            ) : (
+              <>
+                {isConnected && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
+                <p className={`text-[11px] ${isConnected ? 'text-emerald-500' : 'text-rumi-text/30'}`}>
+                  {isConnected ? t.messages.online : t.messages.offline}
+                </p>
+              </>
             )}
-            <p className={`text-[11px] ${isConnected ? 'text-emerald-500' : 'text-rumi-text/30'}`}>
-              {isConnected ? t.messages.online : t.messages.offline}
-            </p>
           </div>
         </div>
       </div>
@@ -288,25 +320,31 @@ function ChatView({
         </div>
       )}
 
-      {/* Input bar */}
-      <div className="flex items-end gap-2 px-4 py-3 border-t border-rumi-primary-light/10 glass-strong flex-shrink-0">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t.messages.typeMessage}
-          rows={1}
-          className="flex-1 resize-none rounded-2xl border-2 border-rumi-primary-light/30 px-4 py-2.5 text-sm focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 max-h-32 transition-all duration-200 placeholder:text-rumi-text/30"
-          style={{ minHeight: '40px' }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim() || sending}
-          className="p-2.5 rounded-xl bg-rumi-primary text-white hover:bg-rumi-primary-dark transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-md shadow-rumi-primary/20"
-        >
-          <IconSend className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Input bar — disabled when blocked */}
+      {blockedAt ? (
+        <div className="flex items-center justify-center px-4 py-4 border-t border-rumi-primary-light/10 glass-strong flex-shrink-0">
+          <p className="text-sm text-rumi-text/40">{t.messages.conversationBlocked}</p>
+        </div>
+      ) : (
+        <div className="flex items-end gap-2 px-4 py-3 border-t border-rumi-primary-light/10 glass-strong flex-shrink-0">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t.messages.typeMessage}
+            rows={1}
+            className="flex-1 resize-none rounded-2xl border-2 border-rumi-primary-light/30 px-4 py-2.5 text-sm focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 max-h-32 transition-all duration-200 placeholder:text-rumi-text/30"
+            style={{ minHeight: '40px' }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || sending}
+            className="p-2.5 rounded-xl bg-rumi-primary text-white hover:bg-rumi-primary-dark transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-md shadow-rumi-primary/20"
+          >
+            <IconSend className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -314,9 +352,12 @@ function ChatView({
 // ---------- Main Page ----------
 export function MessagesPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -339,55 +380,102 @@ export function MessagesPage() {
     }
   }, [conversationId, fetchConversations]);
 
+  const handleDeleteConversation = async () => {
+    if (!confirmDeleteId) return;
+    setDeleting(true);
+    try {
+      await apiClient.delete(`/messages/conversations/${confirmDeleteId}`);
+      setConversations((prev) => prev.filter((c) => c.id !== confirmDeleteId));
+      // If this was the active conversation, navigate away
+      if (confirmDeleteId === conversationId) {
+        navigate('/messages');
+      }
+      setConfirmDeleteId(null);
+    } catch {
+      // Silently fail
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const activeConversation = conversations.find((c) => c.id === conversationId);
   const userId = user?.userId || '';
 
   const showListOnMobile = !conversationId;
 
   return (
-    <div className="h-[calc(100vh-80px)] md:h-[calc(100vh-80px)] flex flex-col md:flex-row bg-white rounded-2xl shadow-lg shadow-rumi-primary/[0.04] overflow-hidden border border-rumi-primary-light/15">
-      {/* Conversation list sidebar */}
-      <div
-        className={`${
-          showListOnMobile ? 'flex' : 'hidden'
-        } md:flex flex-col w-full md:w-80 md:border-r border-rumi-primary-light/10 flex-shrink-0`}
-      >
-        <div className="px-4 py-3.5 border-b border-rumi-primary-light/10 flex-shrink-0">
-          <h1 className="text-lg font-bold text-rumi-text">{t.messages.conversations}</h1>
-        </div>
+    <>
+      <div className="h-[calc(100vh-10rem-64px)] md:h-[calc(100vh-5rem-64px)] flex flex-col md:flex-row bg-white rounded-2xl shadow-lg shadow-rumi-primary/[0.04] overflow-hidden border border-rumi-primary-light/15">
+        {/* Conversation list sidebar */}
+        <div
+          className={`${
+            showListOnMobile ? 'flex' : 'hidden'
+          } md:flex flex-col w-full md:w-80 md:border-r border-rumi-primary-light/10 flex-shrink-0`}
+        >
+          <div className="px-4 py-3.5 border-b border-rumi-primary-light/10 flex-shrink-0">
+            <h1 className="text-lg font-bold text-rumi-text">{t.messages.conversations}</h1>
+          </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <ConversationList
-            conversations={conversations}
-            activeId={conversationId}
-            loading={loading}
-            userId={userId}
-          />
-        </div>
-      </div>
-
-      {/* Chat area */}
-      <div
-        className={`${
-          conversationId ? 'flex' : 'hidden'
-        } md:flex flex-col flex-1 min-w-0`}
-      >
-        {conversationId ? (
-          <ChatView
-            conversationId={conversationId}
-            participant={activeConversation?.participant}
-            userId={userId}
-          />
-        ) : (
-          <div className="hidden md:flex flex-col items-center justify-center h-full text-center px-8">
-            <EmptyState
-              icon={<IconHeart className="w-10 h-10" />}
-              title={t.messages.selectConversation}
-              description={t.messages.selectConversationSubtitle}
+          <div className="flex-1 overflow-y-auto">
+            <ConversationList
+              conversations={conversations}
+              activeId={conversationId}
+              loading={loading}
+              userId={userId}
+              onDeleteConversation={(id) => setConfirmDeleteId(id)}
             />
           </div>
-        )}
+        </div>
+
+        {/* Chat area */}
+        <div
+          className={`${
+            conversationId ? 'flex' : 'hidden'
+          } md:flex flex-col flex-1 min-w-0`}
+        >
+          {conversationId ? (
+            <ChatView
+              conversationId={conversationId}
+              participant={activeConversation?.participant}
+              userId={userId}
+            />
+          ) : (
+            <div className="hidden md:flex flex-col items-center justify-center h-full text-center px-8">
+              <EmptyState
+                icon={<IconHeart className="w-10 h-10" />}
+                title={t.messages.selectConversation}
+                description={t.messages.selectConversationSubtitle}
+              />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Delete conversation confirmation modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-rumi-text mb-2">{t.messages.deleteConversation}</h3>
+            <p className="text-sm text-rumi-text/60 mb-6">{t.messages.deleteConversationConfirm}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-xl border-2 border-rumi-primary-light/30 text-rumi-text/60 hover:bg-rumi-bg transition-colors"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleDeleteConversation}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {deleting ? t.common.loading : t.common.delete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
