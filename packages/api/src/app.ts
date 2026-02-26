@@ -7,11 +7,14 @@ import {
 import corsPlugin from './plugins/cors';
 import authPlugin from './plugins/auth';
 import errorHandlerPlugin from './plugins/error-handler';
-import websocketPlugin from './plugins/websocket';
 import localUploadsPlugin from './plugins/local-uploads';
 import { registerRoutes } from './routes';
+import { initPrisma } from './lib/prisma';
 
 export async function buildApp() {
+  // Initialize Prisma (resolves DATABASE_URL from Secrets Manager in AWS)
+  await initPrisma();
+
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL || 'info',
@@ -25,7 +28,13 @@ export async function buildApp() {
   await app.register(corsPlugin);
   await app.register(authPlugin);
   await app.register(errorHandlerPlugin);
-  await app.register(websocketPlugin);
+
+  // WebSocket only works in localdev (Lambda doesn't support persistent connections)
+  if (process.env.STAGE === 'localdev') {
+    const websocketPlugin = (await import('./plugins/websocket')).default;
+    await app.register(websocketPlugin);
+  }
+
   await app.register(localUploadsPlugin);
 
   // Register routes

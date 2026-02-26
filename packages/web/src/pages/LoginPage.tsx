@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { t } from '../i18n/es';
 import { loginUser } from '../services/auth.service';
+import { cognitoLogin } from '../services/cognito-auth.service';
 import { useAuthStore } from '../store/auth.store';
 import { Button } from '../components/ui/Button';
 import { ErrorAlert } from '../components/ui/ErrorAlert';
+
+const isLocalDev = (import.meta.env.VITE_STAGE || 'localdev') === 'localdev';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -20,14 +23,29 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await loginUser({ email, password });
-      setUser({ sub: res.user.cognitoSub, userId: res.user.id, email: res.user.email, token: res.token });
+      if (isLocalDev) {
+        // Local JWT auth
+        const res = await loginUser({ email, password });
+        setUser({ sub: res.user.cognitoSub, userId: res.user.id, email: res.user.email, token: res.token });
+      } else {
+        // Cognito auth
+        const res = await cognitoLogin(email, password);
+        setUser({ sub: res.user.cognitoSub, userId: res.user.id, email: res.user.email, token: res.token });
+      }
       navigate('/', { replace: true });
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Error al iniciar sesion';
-      setError(msg);
+      const error = err as { response?: { data?: { message?: string } }; message?: string; name?: string };
+
+      // Handle Cognito-specific errors
+      if (error.name === 'NotAuthorizedException') {
+        setError('Correo o contraseña incorrectos');
+      } else if (error.name === 'UserNotFoundException') {
+        setError('No existe una cuenta con este correo');
+      } else if (error.name === 'UserNotConfirmedException' || error.message === 'CONFIRM_SIGN_UP_REQUIRED') {
+        setError('Tu cuenta no ha sido verificada. Revisa tu correo electronico.');
+      } else {
+        setError(error.response?.data?.message || error.message || 'Error al iniciar sesion');
+      }
     } finally {
       setLoading(false);
     }

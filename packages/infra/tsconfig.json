@@ -4,7 +4,9 @@
     "outDir": "./dist",
     "rootDir": ".",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "module": "CommonJS",
+    "moduleResolution": "node"
   },
   "include": ["bin", "src"],
   "exclude": ["node_modules", "dist", "cdk.out"]

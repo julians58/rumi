@@ -13,7 +13,7 @@ export function getJwtVerifier() {
 
     verifier = CognitoJwtVerifier.create({
       userPoolId,
-      tokenUse: 'access',
+      tokenUse: 'id',
       clientId,
     });
   }

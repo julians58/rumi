@@ -4,6 +4,8 @@ import type { Construct } from 'constructs';
 
 export class VpcStack extends cdk.Stack {
   public readonly vpc: ec2.IVpc;
+  /** Shared security group for Lambda functions (API + Migration) */
+  public readonly lambdaSecurityGroup: ec2.ISecurityGroup;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -29,6 +31,13 @@ export class VpcStack extends cdk.Stack {
           cidrMask: 24,
         },
       ],
+    });
+
+    // Lambda security group — created here so both Database and API stacks
+    // can reference it without creating cross-stack circular dependencies.
+    this.lambdaSecurityGroup = new ec2.SecurityGroup(this, 'LambdaSg', {
+      vpc: this.vpc,
+      description: 'Security group for Rumi Lambda functions',
     });
 
     // Outputs

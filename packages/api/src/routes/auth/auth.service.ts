@@ -14,6 +14,7 @@ export async function syncUser(cognitoSub: string, email: string) {
       email,
       firstName: email.split('@')[0],
       lastName: '',
+      seekingMode: 'ROOMMATE',
     },
   });
 
@@ -44,6 +45,7 @@ export async function registerLocal(
       password: hashedPassword,
       firstName,
       lastName,
+      seekingMode: 'ROOMMATE',
       age: extra?.age ?? null,
       occupation: extra?.occupation ?? null,
       nationality: extra?.nationality ?? null,

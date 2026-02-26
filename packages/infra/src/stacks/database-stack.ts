@@ -5,6 +5,7 @@ import type { Construct } from 'constructs';
 
 interface DatabaseStackProps extends cdk.StackProps {
   vpc: ec2.IVpc;
+  lambdaSecurityGroup: ec2.ISecurityGroup;
 }
 
 export class DatabaseStack extends cdk.Stack {
@@ -26,6 +27,13 @@ export class DatabaseStack extends cdk.Stack {
       description: 'Security group for Rumi RDS instance',
       allowAllOutbound: false,
     });
+
+    // Allow Lambda → RDS connectivity (both SGs are in the VPC/Database stacks — no cycle)
+    dbSecurityGroup.addIngressRule(
+      props.lambdaSecurityGroup,
+      ec2.Port.tcp(5432),
+      'Lambda to RDS',
+    );
 
     // PostgreSQL RDS instance — MVP: t4g.micro for cost savings (~$12/month)
     const database = new rds.DatabaseInstance(this, 'RumiDatabase', {

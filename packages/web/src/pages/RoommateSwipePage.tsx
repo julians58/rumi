@@ -36,7 +36,7 @@ interface Candidate {
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
-  roommateProfile: RoommateProfile;
+  roommateProfile: RoommateProfile | null;
 }
 
 function formatBudget(budget: number | string): string {
@@ -282,11 +282,11 @@ export function RoommateSwipePage() {
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                 <h2 className="text-2xl font-bold text-white">
                   {currentCandidate.firstName} {currentCandidate.lastName}
-                  {currentCandidate.roommateProfile.age && (
+                  {currentCandidate.roommateProfile?.age && (
                     <span className="font-normal text-lg ml-2">{currentCandidate.roommateProfile.age} {t.profile.yearsOld}</span>
                   )}
                 </h2>
-                {currentCandidate.roommateProfile.occupation && (
+                {currentCandidate.roommateProfile?.occupation && (
                   <p className="text-white/80 text-sm mt-0.5">{currentCandidate.roommateProfile.occupation}</p>
                 )}
               </div>
@@ -295,71 +295,77 @@ export function RoommateSwipePage() {
             {/* Profile info */}
             <div className="p-5 space-y-4">
               {/* Key details */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="primary" size="md" icon={<IconMoney className="w-3.5 h-3.5" />}>
-                  ${formatBudget(currentCandidate.roommateProfile.budget)} /mes
-                </Badge>
-                <Badge variant="accent" size="md" icon={<IconMapPin className="w-3.5 h-3.5" />}>
-                  {currentCandidate.roommateProfile.preferredCity}
-                </Badge>
-                {currentCandidate.roommateProfile.moveInDate && (
-                  <Badge variant="success" size="md" icon={<IconCalendar className="w-3.5 h-3.5" />}>
-                    {new Date(currentCandidate.roommateProfile.moveInDate).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Bio */}
-              {currentCandidate.roommateProfile.bio && (
-                <p className="text-rumi-text/60 text-sm leading-relaxed">
-                  {currentCandidate.roommateProfile.bio}
-                </p>
-              )}
-
-              {/* Neighborhoods */}
-              {currentCandidate.roommateProfile.preferredNeighborhoods.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-1.5">Barrios preferidos</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentCandidate.roommateProfile.preferredNeighborhoods.map((n) => (
-                      <Badge key={n} variant="neutral" size="sm">{n}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Lifestyle tags */}
-              {currentCandidate.roommateProfile.lifestyle && (
-                <div>
-                  <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-1.5">{t.roommate.lifestyle}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentCandidate.roommateProfile.lifestyle.smoking !== undefined && (
-                      <Badge variant="neutral" size="sm">
-                        {currentCandidate.roommateProfile.lifestyle.smoking ? 'Fuma' : 'No fuma'}
-                      </Badge>
-                    )}
-                    {currentCandidate.roommateProfile.lifestyle.pets !== undefined && (
-                      <Badge variant="neutral" size="sm">
-                        Mascotas: {currentCandidate.roommateProfile.lifestyle.pets ? t.roommate.yes : t.roommate.no}
-                      </Badge>
-                    )}
-                    {currentCandidate.roommateProfile.lifestyle.schedule && (
-                      <Badge variant="neutral" size="sm">
-                        {t.roommate.scheduleValues[currentCandidate.roommateProfile.lifestyle.schedule]}
-                      </Badge>
-                    )}
-                    {currentCandidate.roommateProfile.lifestyle.cleanliness && (
-                      <Badge variant="neutral" size="sm">
-                        {t.roommate.cleanlinessValues[currentCandidate.roommateProfile.lifestyle.cleanliness]}
-                      </Badge>
-                    )}
-                    {currentCandidate.roommateProfile.lifestyle.guests && (
-                      <Badge variant="neutral" size="sm">
-                        Invitados: {t.roommate.guestsValues[currentCandidate.roommateProfile.lifestyle.guests]}
+              {currentCandidate.roommateProfile ? (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="primary" size="md" icon={<IconMoney className="w-3.5 h-3.5" />}>
+                      ${formatBudget(currentCandidate.roommateProfile.budget)} /mes
+                    </Badge>
+                    <Badge variant="accent" size="md" icon={<IconMapPin className="w-3.5 h-3.5" />}>
+                      {currentCandidate.roommateProfile.preferredCity}
+                    </Badge>
+                    {currentCandidate.roommateProfile.moveInDate && (
+                      <Badge variant="success" size="md" icon={<IconCalendar className="w-3.5 h-3.5" />}>
+                        {new Date(currentCandidate.roommateProfile.moveInDate).toLocaleDateString('es-CO', { month: 'short', year: 'numeric' })}
                       </Badge>
                     )}
                   </div>
-                </div>
+
+                  {/* Bio */}
+                  {currentCandidate.roommateProfile.bio && (
+                    <p className="text-rumi-text/60 text-sm leading-relaxed">
+                      {currentCandidate.roommateProfile.bio}
+                    </p>
+                  )}
+
+                  {/* Neighborhoods */}
+                  {currentCandidate.roommateProfile.preferredNeighborhoods.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-1.5">Barrios preferidos</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {currentCandidate.roommateProfile.preferredNeighborhoods.map((n) => (
+                          <Badge key={n} variant="neutral" size="sm">{n}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lifestyle tags */}
+                  {currentCandidate.roommateProfile.lifestyle && (
+                    <div>
+                      <p className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider mb-1.5">{t.roommate.lifestyle}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {currentCandidate.roommateProfile.lifestyle.smoking !== undefined && (
+                          <Badge variant="neutral" size="sm">
+                            {currentCandidate.roommateProfile.lifestyle.smoking ? 'Fuma' : 'No fuma'}
+                          </Badge>
+                        )}
+                        {currentCandidate.roommateProfile.lifestyle.pets !== undefined && (
+                          <Badge variant="neutral" size="sm">
+                            Mascotas: {currentCandidate.roommateProfile.lifestyle.pets ? t.roommate.yes : t.roommate.no}
+                          </Badge>
+                        )}
+                        {currentCandidate.roommateProfile.lifestyle.schedule && (
+                          <Badge variant="neutral" size="sm">
+                            {t.roommate.scheduleValues[currentCandidate.roommateProfile.lifestyle.schedule]}
+                          </Badge>
+                        )}
+                        {currentCandidate.roommateProfile.lifestyle.cleanliness && (
+                          <Badge variant="neutral" size="sm">
+                            {t.roommate.cleanlinessValues[currentCandidate.roommateProfile.lifestyle.cleanliness]}
+                          </Badge>
+                        )}
+                        {currentCandidate.roommateProfile.lifestyle.guests && (
+                          <Badge variant="neutral" size="sm">
+                            Invitados: {t.roommate.guestsValues[currentCandidate.roommateProfile.lifestyle.guests]}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-rumi-text/40 text-sm italic">Perfil de compañero aún no completado</p>
               )}
             </div>
           </div>

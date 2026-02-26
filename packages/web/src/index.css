@@ -13,7 +13,7 @@
   --color-rumi-bg: #FDF8FB;
   --color-rumi-text: #2D1B36;
 
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 }
 
 /* ── Keyframe Animations ────────────────────────────────────── */
@@ -53,6 +53,23 @@
   50% { transform: translateY(-4px); }
 }
 
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(1deg); }
+  66% { transform: translateY(4px) rotate(-1deg); }
+}
+
 /* ── Animation Utility Classes ──────────────────────────────── */
 
 .animate-fade-in {
@@ -85,6 +102,19 @@
   animation: gentle-float 3s ease-in-out infinite;
 }
 
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
 /* Stagger children entrance animations */
 .stagger-children > * {
   animation: fade-in-up 0.4s ease-out both;
@@ -105,15 +135,25 @@
 /* ── Glassmorphism Utilities ────────────────────────────────── */
 
 .glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass-accent {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 110, 158, 0.08) 0%,
+    rgba(91, 58, 107, 0.06) 100%
+  );
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
 
 /* ── Global Styles ──────────────────────────────────────────── */
@@ -122,9 +162,12 @@ body {
   background-color: var(--color-rumi-bg);
   color: var(--color-rumi-text);
   background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(192, 110, 158, 0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(91, 58, 107, 0.02) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 0%, rgba(192, 110, 158, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(91, 58, 107, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 40%, rgba(192, 110, 158, 0.02) 0%, transparent 40%);
   background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Custom Scrollbar ───────────────────────────────────────── */

@@ -141,6 +141,7 @@ vite.config.ts.timestamp-*
 # AWS CDK
 cdk.out/
 cdk.context.json
+cdk-outputs.json
 
 # Prisma
 packages/db/prisma/*.db

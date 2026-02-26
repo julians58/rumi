@@ -18,16 +18,17 @@ const env: cdk.Environment = {
 const stage = app.node.tryGetContext('stage') ?? 'dev';
 const prefix = `rumi-${stage}`;
 
-// 1. Networking
+// 1. Networking (includes shared Lambda security group)
 const vpcStack = new VpcStack(app, `${prefix}-vpc`, { env });
 
 // 2. Authentication
 const authStack = new AuthStack(app, `${prefix}-auth`, { env, stage });
 
-// 3. Database
+// 3. Database (receives Lambda SG to set up ingress rule)
 const databaseStack = new DatabaseStack(app, `${prefix}-database`, {
   env,
   vpc: vpcStack.vpc,
+  lambdaSecurityGroup: vpcStack.lambdaSecurityGroup,
 });
 
 // 4. Storage (S3 for images)
@@ -36,7 +37,9 @@ const storageStack = new StorageStack(app, `${prefix}-storage`, { env, stage });
 // 5. API (Lambda + API Gateway)
 const apiStack = new ApiStack(app, `${prefix}-api`, {
   env,
+  stage,
   vpc: vpcStack.vpc,
+  lambdaSecurityGroup: vpcStack.lambdaSecurityGroup,
   database: databaseStack.database,
   databaseSecret: databaseStack.secret,
   userPool: authStack.userPool,

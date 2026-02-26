@@ -30,9 +30,14 @@ export async function getCandidates(cognitoSub: string, limit: number) {
     where: {
       id: { notIn: [user.id, ...swipedIds] },
       seekingMode: 'ROOMMATE',
-      roommateProfile: { isNot: null },
+      // Exclude users with an active lease (they already found a place)
+      tenantLeases: { none: { status: 'ACTIVE' } },
     },
-    select: { id: true, firstName: true, lastName: true, avatarUrl: true, roommateProfile: true },
+    select: {
+      id: true, firstName: true, lastName: true, avatarUrl: true,
+      age: true, occupation: true, preferences: true,
+      roommateProfile: true,
+    },
     take: limit,
   });
 }

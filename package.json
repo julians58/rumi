@@ -29,7 +29,11 @@
     "db:migrate": "npm run migrate -w @rumi/db",
     "db:seed": "npm run seed -w @rumi/db",
     "typecheck": "tsc --build",
-    "clean": "rm -rf packages/*/dist packages/*/.tsbuildinfo"
+    "clean": "rm -rf packages/*/dist packages/*/.tsbuildinfo",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:dev": "./scripts/deploy.sh dev",
+    "deploy:prod": "./scripts/deploy.sh prod",
+    "cdk:destroy": "cd packages/infra && npx cdk destroy --all -c stage=dev"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
