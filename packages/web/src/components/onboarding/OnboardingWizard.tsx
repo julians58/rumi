@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { UserPreferences } from '@rumi/shared';
 import { EmojiChip } from './EmojiChip';
 import { Button } from '../ui/Button';
+import { RangeSlider } from '../ui/RangeSlider';
 import {
   WORK_OPTIONS,
   SCHEDULE_OPTIONS,
@@ -55,8 +56,10 @@ export function OnboardingWizard({ onComplete, onSkipAll, saving, initialPrefere
   });
   const [idealCleanliness, setIdealCleanliness] = useState<string | undefined>(initialPreferences?.idealRoommate?.cleanlinessPreference);
   const [idealPersonality, setIdealPersonality] = useState<string[]>(initialPreferences?.idealRoommate?.personalityPreference ?? []);
-  const [ageMin, setAgeMin] = useState<string>(initialPreferences?.idealRoommate?.ageRange?.min?.toString() ?? '');
-  const [ageMax, setAgeMax] = useState<string>(initialPreferences?.idealRoommate?.ageRange?.max?.toString() ?? '');
+  const [ageRange, setAgeRange] = useState<[number, number]>([
+    initialPreferences?.idealRoommate?.ageRange?.min ?? 18,
+    initialPreferences?.idealRoommate?.ageRange?.max ?? 71,
+  ]);
   const [genderPref, setGenderPref] = useState<string[]>(initialPreferences?.idealRoommate?.genderPreference ?? []);
 
   const toggleMulti = (list: string[], value: string, setter: (v: string[]) => void) => {
@@ -94,7 +97,7 @@ export function OnboardingWizard({ onComplete, onSkipAll, saving, initialPrefere
     }
     if (idealCleanliness) ideal.cleanlinessPreference = idealCleanliness;
     if (idealPersonality.length > 0) ideal.personalityPreference = idealPersonality;
-    if (ageMin && ageMax) ideal.ageRange = { min: parseInt(ageMin, 10), max: parseInt(ageMax, 10) };
+    if (ageRange[0] !== 18 || ageRange[1] !== 71) ideal.ageRange = { min: ageRange[0], max: ageRange[1] };
     if (genderPref.length > 0) ideal.genderPreference = genderPref;
     if (Object.keys(ideal).length > 0) prefs.idealRoommate = ideal as UserPreferences['idealRoommate'];
 
@@ -108,9 +111,6 @@ export function OnboardingWizard({ onComplete, onSkipAll, saving, initialPrefere
       onComplete(buildPreferences());
     }
   };
-
-  const inputClass =
-    'w-20 px-3 py-2 rounded-xl border-2 border-rumi-primary-light/30 bg-white text-sm text-rumi-text text-center focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 transition-all duration-200';
 
   return (
     <div className="w-full">
@@ -347,28 +347,15 @@ export function OnboardingWizard({ onComplete, onSkipAll, saving, initialPrefere
             {/* Rango de edad */}
             <div>
               <p className="text-sm font-semibold text-rumi-text/70 mb-2">Rango de edad</p>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  min={16}
-                  max={120}
-                  placeholder="Min"
-                  value={ageMin}
-                  onChange={(e) => setAgeMin(e.target.value)}
-                  className={inputClass}
-                />
-                <span className="text-rumi-text/40">—</span>
-                <input
-                  type="number"
-                  min={16}
-                  max={120}
-                  placeholder="Max"
-                  value={ageMax}
-                  onChange={(e) => setAgeMax(e.target.value)}
-                  className={inputClass}
-                />
-                <span className="text-xs text-rumi-text/40">años</span>
-              </div>
+              <RangeSlider
+                min={18}
+                max={71}
+                value={ageRange}
+                onChange={setAgeRange}
+                minLabel="18"
+                maxLabel="70+"
+                formatValue={(v) => (v >= 71 ? '70+' : String(v))}
+              />
             </div>
 
             {/* Genero preferido */}

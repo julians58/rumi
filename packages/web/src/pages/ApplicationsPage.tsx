@@ -230,9 +230,12 @@ export function ApplicationsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-base font-semibold text-rumi-text">
+                          <Link
+                            to={`/users/${app.applicant.id}`}
+                            className="text-base font-semibold text-rumi-text hover:text-rumi-primary transition-colors"
+                          >
                             {app.applicant.firstName} {app.applicant.lastName}
-                          </p>
+                          </Link>
                           <p className="text-sm text-rumi-text/50 mt-0.5">
                             para{' '}
                             <Link

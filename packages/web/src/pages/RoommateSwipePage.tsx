@@ -9,6 +9,7 @@ import { LoadingState } from '../components/ui/LoadingState';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorAlert } from '../components/ui/ErrorAlert';
 import { Modal } from '../components/ui/Modal';
+import { RangeSlider } from '../components/ui/RangeSlider';
 import { IconHeart, IconX, IconSearch, IconMapPin, IconCalendar, IconMoney } from '../components/ui/Icons';
 
 interface Lifestyle {
@@ -39,11 +40,78 @@ interface Candidate {
   roommateProfile: RoommateProfile | null;
 }
 
+interface Filters {
+  ageRange: [number, number];
+  city: string;
+  smoking: boolean | null;
+  pets: boolean | null;
+  schedule: string | null;
+  cleanliness: string | null;
+  guests: string | null;
+  gender: string | null;
+}
+
+const DEFAULT_FILTERS: Filters = {
+  ageRange: [18, 71],
+  city: '',
+  smoking: null,
+  pets: null,
+  schedule: null,
+  cleanliness: null,
+  guests: null,
+  gender: null,
+};
+
 function formatBudget(budget: number | string): string {
   return Number(budget).toLocaleString('es-CO');
 }
 
+function buildQueryString(filters: Filters): string {
+  const params = new URLSearchParams({ limit: '20' });
+  if (filters.ageRange[0] !== 18) params.set('ageMin', String(filters.ageRange[0]));
+  if (filters.ageRange[1] !== 71) params.set('ageMax', String(filters.ageRange[1]));
+  if (filters.city) params.set('city', filters.city);
+  if (filters.smoking !== null) params.set('smoking', String(filters.smoking));
+  if (filters.pets !== null) params.set('pets', String(filters.pets));
+  if (filters.schedule) params.set('schedule', filters.schedule);
+  if (filters.cleanliness) params.set('cleanliness', filters.cleanliness);
+  if (filters.guests) params.set('guests', filters.guests);
+  if (filters.gender) params.set('gender', filters.gender);
+  return params.toString();
+}
+
+function hasActiveFilters(filters: Filters): boolean {
+  return (
+    filters.ageRange[0] !== 18 ||
+    filters.ageRange[1] !== 71 ||
+    filters.city !== '' ||
+    filters.smoking !== null ||
+    filters.pets !== null ||
+    filters.schedule !== null ||
+    filters.cleanliness !== null ||
+    filters.guests !== null ||
+    filters.gender !== null
+  );
+}
+
 const SWIPE_THRESHOLD = 100;
+
+// Filter chip component
+function FilterChip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+        selected
+          ? 'bg-rumi-primary text-white border-rumi-primary'
+          : 'bg-white text-rumi-text/60 border-rumi-primary-light/30 hover:border-rumi-primary/40'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 export function RoommateSwipePage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -54,16 +122,22 @@ export function RoommateSwipePage() {
   const [showMatch, setShowMatch] = useState<Candidate | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
+  // Filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS });
+  const [appliedFilters, setAppliedFilters] = useState<Filters>({ ...DEFAULT_FILTERS });
+
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const fetchCandidates = useCallback(async () => {
+  const fetchCandidates = useCallback(async (filtersToUse: Filters = appliedFilters) => {
     setLoading(true);
     setError('');
     try {
-      const res = await apiClient.get<Candidate[]>('/roommates/candidates?limit=20');
+      const qs = buildQueryString(filtersToUse);
+      const res = await apiClient.get<Candidate[]>(`/roommates/candidates?${qs}`);
       setCandidates(res.data);
       setCurrentIndex(0);
     } catch (err) {
@@ -75,14 +149,30 @@ export function RoommateSwipePage() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    fetchCandidates();
-  }, [fetchCandidates]);
+    fetchCandidates(DEFAULT_FILTERS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const currentCandidate = candidates[currentIndex] ?? null;
   const isEmpty = !loading && !currentCandidate;
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({ ...filters });
+    setShowFilters(false);
+    fetchCandidates(filters);
+  };
+
+  const handleClearFilters = () => {
+    const cleared = { ...DEFAULT_FILTERS };
+    setFilters(cleared);
+    setAppliedFilters(cleared);
+    setShowFilters(false);
+    fetchCandidates(cleared);
+  };
 
   const handleSwipe = async (action: 'LIKE' | 'PASS') => {
     if (!currentCandidate || swiping) return;
@@ -106,7 +196,8 @@ export function RoommateSwipePage() {
       setCurrentIndex((prev) => prev + 1);
 
       if (currentIndex >= candidates.length - 3) {
-        const more = await apiClient.get<Candidate[]>('/roommates/candidates?limit=20');
+        const qs = buildQueryString(appliedFilters);
+        const more = await apiClient.get<Candidate[]>(`/roommates/candidates?${qs}`);
         if (more.data.length > 0) {
           setCandidates((prev) => [...prev, ...more.data]);
         }
@@ -185,14 +276,14 @@ export function RoommateSwipePage() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (showMatch) return;
+      if (showMatch || showFilters) return;
       if (e.key === 'ArrowLeft') handleSwipe('PASS');
       if (e.key === 'ArrowRight') handleSwipe('LIKE');
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCandidate, swiping, showMatch]);
+  }, [currentCandidate, swiping, showMatch, showFilters]);
 
   const rotation = dragOffset.x * 0.1;
   const likeOpacity = Math.min(Math.max(dragOffset.x / SWIPE_THRESHOLD, 0), 1);
@@ -208,10 +299,129 @@ export function RoommateSwipePage() {
   return (
     <div className="max-w-lg mx-auto">
       {/* Header */}
-      <div className="text-center mb-6 animate-fade-in-up">
+      <div className="text-center mb-4 animate-fade-in-up">
         <h1 className="text-2xl font-bold text-rumi-text">{t.roommate.lookingFor}</h1>
         <p className="text-sm text-rumi-text/50 mt-1">{t.roommate.subtitle}</p>
       </div>
+
+      {/* Filter toggle button */}
+      <div className="flex justify-center mb-4">
+        <button
+          onClick={() => { setShowFilters(!showFilters); if (!showFilters) setFilters({ ...appliedFilters }); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border ${
+            hasActiveFilters(appliedFilters)
+              ? 'bg-rumi-primary text-white border-rumi-primary'
+              : 'bg-white text-rumi-text/60 border-rumi-primary-light/30 hover:border-rumi-primary/40'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filtros
+          {hasActiveFilters(appliedFilters) && (
+            <span className="w-2 h-2 rounded-full bg-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Filter panel */}
+      {showFilters && (
+        <div className="bg-white rounded-2xl shadow-lg border border-rumi-primary-light/15 p-5 mb-6 animate-fade-in-up space-y-5">
+          {/* Age range */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Rango de edad</p>
+            <RangeSlider
+              min={18}
+              max={71}
+              value={filters.ageRange}
+              onChange={(val) => setFilters({ ...filters, ageRange: val })}
+              minLabel="18"
+              maxLabel="70+"
+              formatValue={(v) => (v >= 71 ? '70+' : String(v))}
+            />
+          </div>
+
+          {/* City */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Ciudad</p>
+            <input
+              type="text"
+              value={filters.city}
+              onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+              placeholder="Ej: Bogota, Medellin..."
+              className="w-full px-4 py-2 rounded-xl border-2 border-rumi-primary-light/30 bg-white text-sm text-rumi-text focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 transition-all"
+            />
+          </div>
+
+          {/* Smoking */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Fumador</p>
+            <div className="flex gap-2 flex-wrap">
+              <FilterChip label="No fuma" selected={filters.smoking === false} onClick={() => setFilters({ ...filters, smoking: filters.smoking === false ? null : false })} />
+              <FilterChip label="Fuma" selected={filters.smoking === true} onClick={() => setFilters({ ...filters, smoking: filters.smoking === true ? null : true })} />
+            </div>
+          </div>
+
+          {/* Pets */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Mascotas</p>
+            <div className="flex gap-2 flex-wrap">
+              <FilterChip label="Sin mascotas" selected={filters.pets === false} onClick={() => setFilters({ ...filters, pets: filters.pets === false ? null : false })} />
+              <FilterChip label="Con mascotas" selected={filters.pets === true} onClick={() => setFilters({ ...filters, pets: filters.pets === true ? null : true })} />
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Horario</p>
+            <div className="flex gap-2 flex-wrap">
+              {([['early_bird', 'Madrugador'], ['night_owl', 'Nocturno'], ['flexible', 'Flexible']] as const).map(([val, label]) => (
+                <FilterChip key={val} label={label} selected={filters.schedule === val} onClick={() => setFilters({ ...filters, schedule: filters.schedule === val ? null : val })} />
+              ))}
+            </div>
+          </div>
+
+          {/* Cleanliness */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Orden</p>
+            <div className="flex gap-2 flex-wrap">
+              {([['very_clean', 'Muy ordenado'], ['clean', 'Ordenado'], ['moderate', 'Moderado'], ['relaxed', 'Relajado']] as const).map(([val, label]) => (
+                <FilterChip key={val} label={label} selected={filters.cleanliness === val} onClick={() => setFilters({ ...filters, cleanliness: filters.cleanliness === val ? null : val })} />
+              ))}
+            </div>
+          </div>
+
+          {/* Guests */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Invitados</p>
+            <div className="flex gap-2 flex-wrap">
+              {([['often', 'Frecuentemente'], ['sometimes', 'A veces'], ['rarely', 'Raramente'], ['never', 'Nunca']] as const).map(([val, label]) => (
+                <FilterChip key={val} label={label} selected={filters.guests === val} onClick={() => setFilters({ ...filters, guests: filters.guests === val ? null : val })} />
+              ))}
+            </div>
+          </div>
+
+          {/* Gender */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Genero</p>
+            <div className="flex gap-2 flex-wrap">
+              {([['MALE', 'Masculino'], ['FEMALE', 'Femenino'], ['NON_BINARY', 'No binario']] as const).map(([val, label]) => (
+                <FilterChip key={val} label={label} selected={filters.gender === val} onClick={() => setFilters({ ...filters, gender: filters.gender === val ? null : val })} />
+              ))}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-3 pt-2">
+            <Button variant="ghost" fullWidth onClick={handleClearFilters}>
+              Limpiar filtros
+            </Button>
+            <Button variant="primary" fullWidth onClick={handleApplyFilters}>
+              Aplicar filtros
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ErrorAlert message={error} className="mb-6" />
 
@@ -222,7 +432,7 @@ export function RoommateSwipePage() {
           icon={<IconSearch className="w-10 h-10" />}
           title={t.roommate.noMoreCandidates}
           description={t.roommate.noMoreSubtitle}
-          action={{ label: t.common.search, onClick: fetchCandidates }}
+          action={{ label: t.common.search, onClick: () => fetchCandidates(appliedFilters) }}
         />
       )}
 

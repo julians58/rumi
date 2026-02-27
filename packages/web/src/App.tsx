@@ -15,6 +15,7 @@ import { MessagesPage } from './pages/MessagesPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationWorkflowPage } from './pages/ApplicationWorkflowPage';
 import { LeasesPage } from './pages/LeasesPage';
+import { PublicProfilePage } from './pages/PublicProfilePage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/applications" element={<ApplicationsPage />} />
           <Route path="/applications/:id/workflow" element={<ApplicationWorkflowPage />} />
           <Route path="/leases" element={<LeasesPage />} />
+          <Route path="/users/:id" element={<PublicProfilePage />} />
         </Route>
       </Route>
 

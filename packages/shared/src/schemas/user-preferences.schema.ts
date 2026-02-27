@@ -41,7 +41,7 @@ export const idealRoommateSchema = z.object({
   visitorsOk: z.boolean().optional(),
   cleanlinessPreference: cleanlinessEnum.or(z.literal('ANY')).optional(),
   personalityPreference: z.array(personalityEnum).optional(),
-  ageRange: z.object({ min: z.number().int().min(16), max: z.number().int().max(120) }).optional(),
+  ageRange: z.object({ min: z.number().int().min(18), max: z.number().int().max(71) }).optional(),
   genderPreference: z.array(genderPrefEnum).optional(),
 });
 

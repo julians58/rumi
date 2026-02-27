@@ -16,7 +16,19 @@ export async function upsertRoommateProfile(cognitoSub: string, data: Record<str
   });
 }
 
-export async function getCandidates(cognitoSub: string, limit: number) {
+export interface CandidateFilters {
+  ageMin?: number;
+  ageMax?: number;
+  city?: string;
+  smoking?: boolean;
+  pets?: boolean;
+  schedule?: string;
+  cleanliness?: string;
+  guests?: string;
+  gender?: string;
+}
+
+export async function getCandidates(cognitoSub: string, limit: number, filters: CandidateFilters = {}) {
   const prisma = getPrisma();
   const user = await prisma.user.findUniqueOrThrow({ where: { cognitoSub } });
 
@@ -26,13 +38,60 @@ export async function getCandidates(cognitoSub: string, limit: number) {
   });
   const swipedIds = swiped.map((s: { receiverId: string }) => s.receiverId);
 
+  // Build where clause
+  const where: Record<string, unknown> = {
+    id: { notIn: [user.id, ...swipedIds] },
+    seekingMode: 'ROOMMATE',
+    tenantLeases: { none: { status: 'ACTIVE' } },
+  };
+
+  // Age filter (71 means "70+", i.e. no upper bound)
+  if (filters.ageMin || filters.ageMax) {
+    const ageFilter: Record<string, number> = {};
+    if (filters.ageMin) ageFilter.gte = filters.ageMin;
+    if (filters.ageMax && filters.ageMax < 71) ageFilter.lte = filters.ageMax;
+    where.age = ageFilter;
+  }
+
+  // Gender filter
+  if (filters.gender) {
+    where.gender = filters.gender;
+  }
+
+  // City filter — via roommateProfile relation
+  const roommateWhere: Record<string, unknown> = {};
+  if (filters.city) {
+    roommateWhere.preferredCity = { contains: filters.city, mode: 'insensitive' };
+  }
+
+  // Lifestyle JSON filters — Prisma supports path-based JSON filtering
+  const lifestyleConditions: Record<string, unknown>[] = [];
+  if (filters.smoking !== undefined) {
+    lifestyleConditions.push({ lifestyle: { path: ['smoking'], equals: filters.smoking } });
+  }
+  if (filters.pets !== undefined) {
+    lifestyleConditions.push({ lifestyle: { path: ['pets'], equals: filters.pets } });
+  }
+  if (filters.schedule) {
+    lifestyleConditions.push({ lifestyle: { path: ['schedule'], equals: filters.schedule } });
+  }
+  if (filters.cleanliness) {
+    lifestyleConditions.push({ lifestyle: { path: ['cleanliness'], equals: filters.cleanliness } });
+  }
+  if (filters.guests) {
+    lifestyleConditions.push({ lifestyle: { path: ['guests'], equals: filters.guests } });
+  }
+
+  if (Object.keys(roommateWhere).length > 0 || lifestyleConditions.length > 0) {
+    const rpWhere = { ...roommateWhere };
+    if (lifestyleConditions.length > 0) {
+      Object.assign(rpWhere, { AND: lifestyleConditions });
+    }
+    where.roommateProfile = { is: rpWhere };
+  }
+
   return prisma.user.findMany({
-    where: {
-      id: { notIn: [user.id, ...swipedIds] },
-      seekingMode: 'ROOMMATE',
-      // Exclude users with an active lease (they already found a place)
-      tenantLeases: { none: { status: 'ACTIVE' } },
-    },
+    where,
     select: {
       id: true, firstName: true, lastName: true, avatarUrl: true,
       age: true, occupation: true, preferences: true,

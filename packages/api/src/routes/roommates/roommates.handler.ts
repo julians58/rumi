@@ -15,8 +15,21 @@ export async function updateProfileHandler(request: FastifyRequest, reply: Fasti
 }
 
 export async function getCandidatesHandler(request: FastifyRequest, reply: FastifyReply) {
-  const { limit } = request.query as { limit?: string };
-  const candidates = await roommatesService.getCandidates(request.user!.sub, Number(limit) || 10);
+  const query = request.query as Record<string, string | undefined>;
+  const limit = Number(query.limit) || 10;
+
+  const filters: roommatesService.CandidateFilters = {};
+  if (query.ageMin) filters.ageMin = Number(query.ageMin);
+  if (query.ageMax) filters.ageMax = Number(query.ageMax);
+  if (query.city) filters.city = query.city;
+  if (query.smoking) filters.smoking = query.smoking === 'true';
+  if (query.pets) filters.pets = query.pets === 'true';
+  if (query.schedule) filters.schedule = query.schedule;
+  if (query.cleanliness) filters.cleanliness = query.cleanliness;
+  if (query.guests) filters.guests = query.guests;
+  if (query.gender) filters.gender = query.gender;
+
+  const candidates = await roommatesService.getCandidates(request.user!.sub, limit, filters);
   return reply.send(candidates);
 }
 
