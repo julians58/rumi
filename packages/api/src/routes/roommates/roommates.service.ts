@@ -26,6 +26,7 @@ export interface CandidateFilters {
   cleanliness?: string;
   guests?: string;
   gender?: string;
+  language?: string[];
 }
 
 export async function getCandidates(cognitoSub: string, limit: number, filters: CandidateFilters = {}) {
@@ -56,6 +57,11 @@ export async function getCandidates(cognitoSub: string, limit: number, filters: 
   // Gender filter
   if (filters.gender) {
     where.gender = filters.gender;
+  }
+
+  // Language filter — user must speak at least one of the requested languages
+  if (filters.language && filters.language.length > 0) {
+    where.language = { hasSome: filters.language };
   }
 
   // City filter — via roommateProfile relation
@@ -94,7 +100,7 @@ export async function getCandidates(cognitoSub: string, limit: number, filters: 
     where,
     select: {
       id: true, firstName: true, lastName: true, avatarUrl: true,
-      age: true, occupation: true, preferences: true,
+      age: true, occupation: true, language: true, preferences: true,
       roommateProfile: true,
     },
     take: limit,

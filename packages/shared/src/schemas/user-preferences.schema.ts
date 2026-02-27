@@ -18,6 +18,9 @@ export const personalityEnum = z.enum(['INTROVERT', 'EXTROVERT', 'CALM', 'SOCIAL
 // Gender preference for ideal roommate
 export const genderPrefEnum = z.enum(['MALE', 'FEMALE', 'NON_BINARY', 'ANY']);
 
+// Language preference
+export const preferencesLanguageEnum = z.enum(['SPANISH', 'ENGLISH', 'OTHER']);
+
 // My own characteristics
 export const myTraitsSchema = z.object({
   worksOutside: z.boolean().optional(),
@@ -29,6 +32,7 @@ export const myTraitsSchema = z.object({
   hasFrequentVisitors: z.boolean().optional(),
   cleanliness: cleanlinessEnum.optional(),
   personality: z.array(personalityEnum).optional(),
+  language: z.array(preferencesLanguageEnum).optional(),
 });
 
 // What I want in a roommate
@@ -43,6 +47,7 @@ export const idealRoommateSchema = z.object({
   personalityPreference: z.array(personalityEnum).optional(),
   ageRange: z.object({ min: z.number().int().min(18), max: z.number().int().max(71) }).optional(),
   genderPreference: z.array(genderPrefEnum).optional(),
+  languagePreference: z.array(preferencesLanguageEnum).optional(),
 });
 
 // Top-level preferences object

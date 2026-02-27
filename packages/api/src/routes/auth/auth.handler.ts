@@ -18,11 +18,20 @@ export async function registerHandler(request: FastifyRequest, reply: FastifyRep
 
   const body = registerSchema.parse(request.body);
   const result = await authService.registerLocal(body.email, body.password, body.firstName, body.lastName, {
-    age: body.age ?? null,
+    dateOfBirth: body.dateOfBirth ?? null,
     occupation: body.occupation ?? null,
     nationality: body.nationality ?? null,
     gender: body.gender ?? null,
+    language: body.language ?? [],
   });
+
+  if (result === 'UNDERAGE') {
+    return reply.status(400).send({
+      error: 'Bad Request',
+      message: 'Debes tener al menos 18 años para registrarte',
+      statusCode: 400,
+    });
+  }
 
   if (result === 'EXISTS') {
     return reply.status(409).send({
@@ -45,9 +54,11 @@ export async function registerHandler(request: FastifyRequest, reply: FastifyRep
       cognitoSub: user.cognitoSub,
       seekingMode: user.seekingMode,
       age: user.age,
+      dateOfBirth: user.dateOfBirth ? (user.dateOfBirth as Date).toISOString() : null,
       occupation: user.occupation,
       nationality: user.nationality,
       gender: user.gender,
+      language: user.language,
       preferences: (user as Record<string, unknown>).preferences ?? null,
     },
   });
@@ -92,9 +103,11 @@ export async function loginHandler(request: FastifyRequest, reply: FastifyReply)
       cognitoSub: user.cognitoSub,
       seekingMode: user.seekingMode,
       age: user.age,
+      dateOfBirth: user.dateOfBirth ? (user.dateOfBirth as Date).toISOString() : null,
       occupation: user.occupation,
       nationality: user.nationality,
       gender: user.gender,
+      language: user.language,
       preferences: (user as Record<string, unknown>).preferences ?? null,
     },
   });

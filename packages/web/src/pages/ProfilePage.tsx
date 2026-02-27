@@ -15,6 +15,7 @@ import { ErrorAlert } from '../components/ui/ErrorAlert';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { IconEdit, IconLogout, IconTrash } from '../components/ui/Icons';
 import { OnboardingWizard } from '../components/onboarding/OnboardingWizard';
+import { NATIONALITIES } from '../data/nationalities';
 import {
   LOOKING_FOR_OPTIONS,
   SCHEDULE_OPTIONS,
@@ -38,9 +39,11 @@ interface UserProfile {
   bio: string | null;
   avatarUrl: string | null;
   age: number | null;
+  dateOfBirth: string | null;
   occupation: string | null;
   nationality: string | null;
   gender: 'MALE' | 'FEMALE' | 'NON_BINARY' | 'OTHER' | 'PREFER_NOT_TO_SAY' | null;
+  language: string[];
   seekingMode: 'NONE' | 'TENANT' | 'ROOMMATE';
   preferences: UserPreferences | null;
   createdAt: string;
@@ -51,7 +54,6 @@ interface ProfileFormData {
   lastName: string;
   phone: string;
   bio: string;
-  age: string;
   occupation: string;
   nationality: string;
   gender: string;
@@ -62,11 +64,39 @@ const genderLabels: Record<string, string> = {
   OTHER: t.gender.OTHER, PREFER_NOT_TO_SAY: t.gender.PREFER_NOT_TO_SAY,
 };
 
+const languageLabels: Record<string, string> = {
+  SPANISH: 'Español',
+  ENGLISH: 'Ingles',
+  OTHER: 'Otro',
+};
+
 const seekingLabels: Record<string, string> = {
   NONE: t.seeking.none, TENANT: t.seeking.tenant, ROOMMATE: t.seeking.roommate,
 };
 
 const GENDER_OPTIONS = ['MALE', 'FEMALE', 'NON_BINARY', 'OTHER', 'PREFER_NOT_TO_SAY'] as const;
+
+const LANGUAGE_OPTIONS = [
+  { value: 'SPANISH', label: 'Español' },
+  { value: 'ENGLISH', label: 'Inglés' },
+  { value: 'OTHER', label: 'Otro' },
+] as const;
+
+function ToggleChip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+        selected
+          ? 'bg-rumi-primary text-white border-rumi-primary'
+          : 'bg-white text-rumi-text/60 border-rumi-primary-light/30 hover:border-rumi-primary/40'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 const inputClass =
   'w-full px-4 py-3 rounded-xl border-2 border-rumi-primary-light/30 bg-white text-sm text-rumi-text placeholder:text-rumi-text/30 focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 transition-all duration-200';
@@ -113,9 +143,10 @@ export function ProfilePage() {
     reset({
       firstName: profile.firstName, lastName: profile.lastName,
       phone: profile.phone || '', bio: profile.bio || '',
-      age: profile.age?.toString() || '', occupation: profile.occupation || '',
+      occupation: profile.occupation || '',
       nationality: profile.nationality || '', gender: profile.gender || '',
     });
+    setEditLanguages(profile.language || []);
     setEditing(true);
   };
 
@@ -125,9 +156,9 @@ export function ProfilePage() {
       const payload = {
         firstName: data.firstName, lastName: data.lastName,
         phone: data.phone || null, bio: data.bio || null,
-        age: data.age ? parseInt(data.age, 10) : null,
         occupation: data.occupation || null, nationality: data.nationality || null,
         gender: data.gender || null,
+        language: editLanguages,
         preferences: profile?.preferences ?? null,
       };
       const res = await apiClient.put<UserProfile>('/users/me', payload);
@@ -153,6 +184,7 @@ export function ProfilePage() {
     }
   };
 
+  const [editLanguages, setEditLanguages] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -303,18 +335,47 @@ export function ProfilePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>{t.profile.age}</label>
-                <input type="number" min={16} max={120} {...register('age', { min: { value: 16, message: 'Minimo 16' }, max: { value: 120, message: 'Maximo 120' } })} className={inputClass} placeholder="Ej: 28" />
-                {formErrors.age && <p className="text-xs text-rumi-danger mt-1.5">{formErrors.age.message}</p>}
+            {/* DOB is read-only — show it but don't allow editing */}
+            {profile.dateOfBirth && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>{t.profile.dateOfBirth}</label>
+                  <p className="px-4 py-3 rounded-xl border-2 border-rumi-primary-light/15 bg-rumi-bg text-sm text-rumi-text/60">
+                    {new Date(profile.dateOfBirth).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                  <p className="text-xs text-rumi-text/30 mt-1">La fecha de nacimiento no se puede modificar</p>
+                </div>
+                <div>
+                  <label className={labelClass}>{t.profile.age}</label>
+                  <p className="px-4 py-3 rounded-xl border-2 border-rumi-primary-light/15 bg-rumi-bg text-sm text-rumi-text/60">
+                    {profile.age} {t.profile.yearsOld}
+                  </p>
+                </div>
               </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>{t.profile.gender}</label>
                 <select {...register('gender')} className={`${inputClass} appearance-none`}>
                   <option value="">-- Seleccionar --</option>
                   {GENDER_OPTIONS.map((g) => <option key={g} value={g}>{genderLabels[g]}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>{t.profile.language}</label>
+                <div className="flex gap-2 flex-wrap mt-1">
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <ToggleChip
+                      key={l.value}
+                      label={l.label}
+                      selected={editLanguages.includes(l.value)}
+                      onClick={() => setEditLanguages((prev) =>
+                        prev.includes(l.value) ? prev.filter((v) => v !== l.value) : [...prev, l.value]
+                      )}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -325,7 +386,10 @@ export function ProfilePage() {
               </div>
               <div>
                 <label className={labelClass}>{t.profile.nationality}</label>
-                <input {...register('nationality', { maxLength: 100 })} className={inputClass} placeholder="Ej: Colombiana" />
+                <select {...register('nationality')} className={`${inputClass} appearance-none`}>
+                  <option value="">-- Seleccionar --</option>
+                  {NATIONALITIES.map((n) => <option key={n.value} value={n.value}>{n.label}</option>)}
+                </select>
               </div>
             </div>
 
@@ -375,6 +439,14 @@ export function ProfilePage() {
               </Badge>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
+                {profile.dateOfBirth && (
+                  <div>
+                    <span className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider">{t.profile.dateOfBirth}</span>
+                    <p className="text-sm text-rumi-text mt-0.5">
+                      {new Date(profile.dateOfBirth).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                )}
                 {profile.age != null && (
                   <div>
                     <span className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider">{t.profile.age}</span>
@@ -385,6 +457,12 @@ export function ProfilePage() {
                   <div>
                     <span className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider">{t.profile.gender}</span>
                     <p className="text-sm text-rumi-text mt-0.5">{genderLabels[profile.gender] || profile.gender}</p>
+                  </div>
+                )}
+                {profile.language && profile.language.length > 0 && (
+                  <div>
+                    <span className="text-xs font-semibold text-rumi-text/40 uppercase tracking-wider">{t.profile.language}</span>
+                    <p className="text-sm text-rumi-text mt-0.5">{profile.language.map((l) => languageLabels[l] || l).join(', ')}</p>
                   </div>
                 )}
                 {profile.occupation && (

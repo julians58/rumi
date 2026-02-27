@@ -6,6 +6,7 @@ import { cognitoRegister, cognitoConfirmRegistration, cognitoLogin } from '../se
 import { useAuthStore } from '../store/auth.store';
 import { Button } from '../components/ui/Button';
 import { ErrorAlert } from '../components/ui/ErrorAlert';
+import { NATIONALITIES } from '../data/nationalities';
 
 const isLocalDev = (import.meta.env.VITE_STAGE || 'localdev') === 'localdev';
 
@@ -17,12 +18,41 @@ const GENDER_OPTIONS = [
   { value: 'PREFER_NOT_TO_SAY', label: t.gender.PREFER_NOT_TO_SAY },
 ] as const;
 
+const LANGUAGE_OPTIONS = [
+  { value: 'SPANISH', label: 'Español' },
+  { value: 'ENGLISH', label: 'Ingles' },
+  { value: 'OTHER', label: 'Otro' },
+] as const;
+
 const inputClass =
   'w-full px-4 py-3 rounded-xl border-2 border-rumi-primary-light/30 bg-white text-sm text-rumi-text placeholder:text-rumi-text/30 focus:outline-none focus:border-rumi-primary focus:ring-4 focus:ring-rumi-primary/10 transition-all duration-200';
 
 const selectClass = `${inputClass} appearance-none`;
 
 const labelClass = 'block text-sm font-medium text-rumi-text/70 mb-1.5';
+
+/** Calculate max date for DOB input (must be 18 years ago) */
+function getMaxDobDate(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d.toISOString().split('T')[0];
+}
+
+function ToggleChip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+        selected
+          ? 'bg-rumi-primary text-white border-rumi-primary'
+          : 'bg-white text-rumi-text/60 border-rumi-primary-light/30 hover:border-rumi-primary/40'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -32,11 +62,12 @@ export function RegisterPage() {
     lastName: '',
     email: '',
     password: '',
-    age: '',
+    dateOfBirth: '',
     occupation: '',
     nationality: '',
     gender: '',
   });
+  const [languages, setLanguages] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -48,6 +79,12 @@ export function RegisterPage() {
     (field: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const toggleLanguage = (lang: string) => {
+    setLanguages((prev) =>
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +99,11 @@ export function RegisterPage() {
           lastName: form.lastName,
           email: form.email,
           password: form.password,
-          age: form.age ? parseInt(form.age, 10) : null,
+          dateOfBirth: form.dateOfBirth || null,
           occupation: form.occupation || null,
           nationality: form.nationality || null,
           gender: (form.gender as 'MALE' | 'FEMALE' | 'NON_BINARY' | 'OTHER' | 'PREFER_NOT_TO_SAY') || null,
+          language: languages.length > 0 ? languages as ('SPANISH' | 'ENGLISH' | 'OTHER')[] : undefined,
         };
         const res = await registerUser(payload);
         setUser({ sub: res.user.cognitoSub, userId: res.user.id, email: res.user.email, token: res.token });
@@ -253,19 +291,18 @@ export function RegisterPage() {
               </div>
             </div>
 
-            {/* Age + Gender row */}
+            {/* Date of birth + Gender row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>{t.profile.age}</label>
+                <label className={labelClass}>{t.profile.dateOfBirth}</label>
                 <input
-                  type="number"
-                  min={16}
-                  max={120}
-                  value={form.age}
-                  onChange={handleChange('age')}
+                  type="date"
+                  value={form.dateOfBirth}
+                  onChange={handleChange('dateOfBirth')}
+                  max={getMaxDobDate()}
                   className={inputClass}
-                  placeholder="Ej: 28"
                 />
+                <p className="text-xs text-rumi-text/30 mt-1">Debes ser mayor de 18 años</p>
               </div>
               <div>
                 <label className={labelClass}>{t.profile.gender}</label>
@@ -299,14 +336,33 @@ export function RegisterPage() {
               </div>
               <div>
                 <label className={labelClass}>{t.profile.nationality}</label>
-                <input
-                  type="text"
+                <select
                   value={form.nationality}
                   onChange={handleChange('nationality')}
-                  className={inputClass}
-                  placeholder="Ej: Colombiana"
-                  maxLength={100}
-                />
+                  className={selectClass}
+                >
+                  <option value="">-- Seleccionar --</option>
+                  {NATIONALITIES.map((n) => (
+                    <option key={n.value} value={n.value}>
+                      {n.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Language — multi-select via toggle chips */}
+            <div>
+              <label className={labelClass}>{t.profile.language}</label>
+              <div className="flex gap-2 flex-wrap">
+                {LANGUAGE_OPTIONS.map((l) => (
+                  <ToggleChip
+                    key={l.value}
+                    label={l.label}
+                    selected={languages.includes(l.value)}
+                    onClick={() => toggleLanguage(l.value)}
+                  />
+                ))}
               </div>
             </div>
           </>

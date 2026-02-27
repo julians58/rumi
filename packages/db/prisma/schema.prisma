@@ -22,9 +22,11 @@ model User {
   avatarUrl  String?     @map("avatar_url")
   bio        String?
   age          Int?
+  dateOfBirth  DateTime?   @map("date_of_birth")
   occupation   String?
   nationality  String?
   gender       Gender?
+  language     String[]    @default([])
   preferences  Json?       // User preferences (lookingFor, myTraits, idealRoommate)
   seekingMode SeekingMode @default(NONE) @map("seeking_mode")
   deletedAt  DateTime?   @map("deleted_at")

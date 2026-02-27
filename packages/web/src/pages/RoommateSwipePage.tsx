@@ -49,6 +49,7 @@ interface Filters {
   cleanliness: string | null;
   guests: string | null;
   gender: string | null;
+  language: string[];
 }
 
 const DEFAULT_FILTERS: Filters = {
@@ -60,6 +61,7 @@ const DEFAULT_FILTERS: Filters = {
   cleanliness: null,
   guests: null,
   gender: null,
+  language: [],
 };
 
 function formatBudget(budget: number | string): string {
@@ -77,6 +79,7 @@ function buildQueryString(filters: Filters): string {
   if (filters.cleanliness) params.set('cleanliness', filters.cleanliness);
   if (filters.guests) params.set('guests', filters.guests);
   if (filters.gender) params.set('gender', filters.gender);
+  if (filters.language.length > 0) params.set('language', filters.language.join(','));
   return params.toString();
 }
 
@@ -90,7 +93,8 @@ function hasActiveFilters(filters: Filters): boolean {
     filters.schedule !== null ||
     filters.cleanliness !== null ||
     filters.guests !== null ||
-    filters.gender !== null
+    filters.gender !== null ||
+    filters.language.length > 0
   );
 }
 
@@ -407,6 +411,21 @@ export function RoommateSwipePage() {
             <div className="flex gap-2 flex-wrap">
               {([['MALE', 'Masculino'], ['FEMALE', 'Femenino'], ['NON_BINARY', 'No binario']] as const).map(([val, label]) => (
                 <FilterChip key={val} label={label} selected={filters.gender === val} onClick={() => setFilters({ ...filters, gender: filters.gender === val ? null : val })} />
+              ))}
+            </div>
+          </div>
+
+          {/* Language */}
+          <div>
+            <p className="text-sm font-semibold text-rumi-text/70 mb-2">Idioma</p>
+            <div className="flex gap-2 flex-wrap">
+              {([['SPANISH', 'Español'], ['ENGLISH', 'Inglés'], ['OTHER', 'Otro']] as const).map(([val, label]) => (
+                <FilterChip
+                  key={val}
+                  label={label}
+                  selected={filters.language.includes(val)}
+                  onClick={() => setFilters({ ...filters, language: filters.language.includes(val) ? filters.language.filter((l) => l !== val) : [...filters.language, val] })}
+                />
               ))}
             </div>
           </div>

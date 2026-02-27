@@ -2,6 +2,17 @@ import { getPrisma } from '../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
+/** Calculate age from date of birth */
+function calculateAge(dateOfBirth: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - dateOfBirth.getFullYear();
+  const monthDiff = today.getMonth() - dateOfBirth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateOfBirth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 // Cognito sync (dev/prod)
 export async function syncUser(cognitoSub: string, email: string) {
   const prisma = getPrisma();
@@ -28,14 +39,29 @@ export async function registerLocal(
   firstName: string,
   lastName: string,
   extra?: {
-    age?: number | null;
+    dateOfBirth?: string | null;
     occupation?: string | null;
     nationality?: string | null;
     gender?: 'MALE' | 'FEMALE' | 'NON_BINARY' | 'OTHER' | 'PREFER_NOT_TO_SAY' | null;
+    language?: string[];
   },
 ) {
   const prisma = getPrisma();
   const hashedPassword = await bcrypt.hash(password, 12);
+
+  // Calculate age from DOB if provided
+  let age: number | null = null;
+  let dateOfBirth: Date | null = null;
+
+  if (extra?.dateOfBirth) {
+    dateOfBirth = new Date(extra.dateOfBirth);
+    age = calculateAge(dateOfBirth);
+
+    // Must be at least 18 years old
+    if (age < 18) {
+      return 'UNDERAGE';
+    }
+  }
 
   // Check if a user with this email already exists
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -55,10 +81,12 @@ export async function registerLocal(
         lastName,
         deletedAt: null,
         seekingMode: 'ROOMMATE',
-        age: extra?.age ?? null,
+        age,
+        dateOfBirth,
         occupation: extra?.occupation ?? null,
         nationality: extra?.nationality ?? null,
         gender: extra?.gender ?? null,
+        language: extra?.language ?? [],
       },
     });
 
@@ -75,10 +103,12 @@ export async function registerLocal(
       firstName,
       lastName,
       seekingMode: 'ROOMMATE',
-      age: extra?.age ?? null,
+      age,
+      dateOfBirth,
       occupation: extra?.occupation ?? null,
       nationality: extra?.nationality ?? null,
       gender: extra?.gender ?? null,
+      language: extra?.language ?? [],
     },
   });
 

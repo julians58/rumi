@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx prisma migrate dev:*)",
       "Bash(npx prisma generate:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx prisma migrate deploy:*)",
+      "Bash(netstat -ano)"
     ]
   }
 }

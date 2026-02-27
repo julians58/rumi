@@ -28,6 +28,7 @@ export async function getCandidatesHandler(request: FastifyRequest, reply: Fasti
   if (query.cleanliness) filters.cleanliness = query.cleanliness;
   if (query.guests) filters.guests = query.guests;
   if (query.gender) filters.gender = query.gender;
+  if (query.language) filters.language = query.language.split(',');
 
   const candidates = await roommatesService.getCandidates(request.user!.sub, limit, filters);
   return reply.send(candidates);
