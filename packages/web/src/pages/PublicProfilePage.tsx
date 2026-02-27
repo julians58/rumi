@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { t } from '../i18n/es';
 import apiClient from '../services/api-client';
-import { PageHeader } from '../components/ui/PageHeader';
 import { Card } from '../components/ui/Card';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorAlert } from '../components/ui/ErrorAlert';
-import { IconStar } from '../components/ui/Icons';
+import { IconStar, IconArrowLeft } from '../components/ui/Icons';
 
 interface PublicProfile {
   id: string;
@@ -92,7 +91,15 @@ export function PublicProfilePage() {
   if (error || !profile) {
     return (
       <div className="max-w-2xl mx-auto">
-        <PageHeader title="Perfil" backTo="#" />
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-1 rounded-lg text-rumi-text/40 hover:text-rumi-text hover:bg-rumi-text/5 transition-colors"
+          >
+            <IconArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-rumi-text">Perfil</h1>
+        </div>
         <ErrorAlert message={error || 'Usuario no encontrado'} />
       </div>
     );
@@ -136,15 +143,15 @@ export function PublicProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader
-        title="Perfil del usuario"
-        backTo="#"
-        subtitle={
-          <button onClick={() => navigate(-1)} className="text-rumi-primary hover:underline text-sm">
-            {t.common.back}
-          </button>
-        }
-      />
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-1 rounded-lg text-rumi-text/40 hover:text-rumi-text hover:bg-rumi-text/5 transition-colors"
+        >
+          <IconArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-rumi-text">Perfil del usuario</h1>
+      </div>
 
       <Card variant="elevated" padding="lg" className="animate-fade-in-up">
         {/* Header */}
